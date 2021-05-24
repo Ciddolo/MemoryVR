@@ -51,7 +51,7 @@ namespace BNG {
             // Connect to Random Room if Connected to Photon Server
             if (PhotonNetwork.IsConnected) {
                 if (JoinRoomOnStart) {
-                    LogText("Joining Room : " + JoinRoomName);
+                    LogText("<color=white>Joining Room : " + JoinRoomName + "</color>");
                     PhotonNetwork.JoinRoom(JoinRoomName);
                 }
             }
@@ -70,20 +70,20 @@ namespace BNG {
         }
 
         public override void OnJoinRoomFailed(short returnCode, string message) {
-            LogText("Room does not exist. Creating <color=yellow>" + JoinRoomName + "</color>");
+            LogText("<color=white>Room does not exist. Creating </color><color=yellow>" + JoinRoomName + "</color>");
             PhotonNetwork.CreateRoom(JoinRoomName, new RoomOptions { MaxPlayers = maxPlayersPerRoom }, TypedLobby.Default);
         }
 
         public override void OnJoinRandomFailed(short returnCode, string message) {
-            Debug.Log("OnJoinRandomFailed Failed, Error : " + message);
+            Debug.Log("<color=red>OnJoinRandomFailed Failed, Error : " + message + "</color>");
         }
 
         public override void OnConnectedToMaster() {
 
-            LogText("Connected to Master Server. \n");
+            LogText("<color=white>Connected to Master Server. \n</color>");
 
             if (JoinRoomOnStart) {
-                LogText("Joining Room : <color=aqua>" + JoinRoomName + "</color>");
+                LogText("<color=white>Joining Room : </color><color=aqua>" + JoinRoomName + "</color>");
                 PhotonNetwork.JoinRoom(JoinRoomName);
             }
         }
@@ -93,12 +93,12 @@ namespace BNG {
 
             float playerCount = PhotonNetwork.IsConnected && PhotonNetwork.CurrentRoom != null ? PhotonNetwork.CurrentRoom.PlayerCount : 0;
 
-            LogText("Connected players : " + playerCount);           
+            LogText("<color=white>Connected players : " + playerCount + "</color>");           
         }
 
         public override void OnJoinedRoom() {
 
-            LogText("Joined Room. Creating Remote Player Representation.");
+            LogText("<color=white>Joined Room. Creating Remote Player Representation.</color>");
 
             // Network Instantiate the object used to represent our player. This will have a View on it and represent the player         
             GameObject player = PhotonNetwork.Instantiate(RemotePlayerObjectName, new Vector3(0f, 0f, 0f), Quaternion.identity, 0);
@@ -110,10 +110,10 @@ namespace BNG {
         }
 
         public override void OnDisconnected(DisconnectCause cause) {
-            LogText("Disconnected from PUN due to cause : " + cause);
+            LogText("<color=red>Disconnected from PUN due to cause : " + cause + "</color>");
 
             if (!PhotonNetwork.ReconnectAndRejoin()) {
-                LogText("Reconnect and Joined.");
+                LogText("<color=white>Reconnect and Joined.</color>");
             }
 
             base.OnDisconnected(cause);
