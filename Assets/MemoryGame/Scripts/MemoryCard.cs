@@ -4,21 +4,17 @@ using UnityEngine;
 
 public class MemoryCard : MonoBehaviour
 {
+    public bool IsShowing { get { return isShowing; } }
+    public bool WasFound { get { return wasFound; } }
+
+    public MeshRenderer CurrentMeshRenderer;
+
     public Material DefaultMaterial;
     public Material ColorMaterial;
     public Material SelectionMaterial;
 
-    public bool IsShowing { get { return isShowing; } }
-    public bool WasFound { get { return wasFound; } }
-
-    private MeshRenderer meshRenderer;
     private bool isShowing;
     private bool wasFound;
-
-    private void Start()
-    {
-        meshRenderer = GetComponent<MeshRenderer>();
-    }
 
     public void ShowCard()
     {
@@ -26,7 +22,7 @@ public class MemoryCard : MonoBehaviour
         if (wasFound) return;
 
         isShowing = true;
-        meshRenderer.material = ColorMaterial;
+        CurrentMeshRenderer.material = ColorMaterial;
     }
 
     public void HideCard()
@@ -35,7 +31,7 @@ public class MemoryCard : MonoBehaviour
         if (wasFound) return;
 
         isShowing = false;
-        meshRenderer.material = DefaultMaterial;
+        CurrentMeshRenderer.material = DefaultMaterial;
     }
 
     public void SelectCard()
@@ -43,7 +39,7 @@ public class MemoryCard : MonoBehaviour
         if (isShowing) return;
         if (wasFound) return;
 
-        meshRenderer.material = SelectionMaterial;
+        CurrentMeshRenderer.material = SelectionMaterial;
     }
 
     public void DeselectCard()
@@ -51,7 +47,7 @@ public class MemoryCard : MonoBehaviour
         if (isShowing) return;
         if (wasFound) return;
 
-        meshRenderer.material = DefaultMaterial;
+        CurrentMeshRenderer.material = DefaultMaterial;
     }
 
     public void SetColor(Material newColor)
@@ -63,6 +59,7 @@ public class MemoryCard : MonoBehaviour
     {
         wasFound = false;
         isShowing = false;
-        HideCard();
+
+        CurrentMeshRenderer.material = DefaultMaterial;
     }
 }

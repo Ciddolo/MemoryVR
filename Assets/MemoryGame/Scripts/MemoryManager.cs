@@ -11,12 +11,14 @@ public enum MemoryDifficulty
 
 public class MemoryManager : MonoBehaviour
 {
-    public GameObject CardPrefab;
+    public MemoryDifficulty GetDifficulty { get { return difficulty; } }
 
-    public MemoryDifficulty Difficulty = MemoryDifficulty.Medium;
+    public GameObject CardPrefab;
 
     public float ColumnsOffset = 0.3f;
     public float RowsOffset = 0.3f;
+
+    private MemoryDifficulty difficulty = MemoryDifficulty.Medium;
 
     private Transform cardsParent;
 
@@ -25,7 +27,6 @@ public class MemoryManager : MonoBehaviour
         cardsParent = transform.GetChild(0);
 
         InstantiateCards();
-        PlaceCards();
     }
 
     private void InstantiateCards()
@@ -38,14 +39,36 @@ public class MemoryManager : MonoBehaviour
         }
     }
 
-    public void PlaceCards(float tableHeight = 0.5f, float cardWidth = 0.4f, float cardHeight = 0.6f)
+    public void SetDifficulty(int newDifficulty)
     {
-        int numberOfCards = (int)Difficulty;
+        difficulty = (MemoryDifficulty)newDifficulty;
+    }
+
+    public void SetDifficulty(MemoryDifficulty newDifficulty)
+    {
+        difficulty = newDifficulty;
+    }
+
+    public void PlaceCards()
+    {
+        for (int i = 0; i < cardsParent.childCount; i++)
+        {
+            GameObject currentCard = cardsParent.GetChild(i).gameObject;
+            currentCard.GetComponent<MemoryCard>().ResetCard();
+            currentCard.SetActive(false);
+        }
+
+        int numberOfCards = (int)difficulty;
         int currentColumn;
         int currentRow = -1;
 
+        float cardWidth = 0.4f;
+        float cardHeight = 0.6f;
+
+        float tableHeight = 0.5f;
+
         int rows = 2;
-        if (Difficulty == MemoryDifficulty.Hard)
+        if (difficulty == MemoryDifficulty.Hard)
             rows = 3;
 
         float x = numberOfCards / rows * cardWidth;
@@ -61,7 +84,6 @@ public class MemoryManager : MonoBehaviour
         {
             GameObject currentCard = cardsParent.GetChild(i).gameObject;
             currentCard.SetActive(true);
-            currentCard.transform.GetChild(0).GetComponent<MemoryCard>().ResetCard();
 
             currentColumn = i % (numberOfCards / rows);
             if (currentColumn == 0) currentRow++;
