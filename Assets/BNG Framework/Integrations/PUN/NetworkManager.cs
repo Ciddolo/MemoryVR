@@ -32,6 +32,10 @@ namespace BNG {
         [Tooltip("Optional GUI Text element to output debug information.")]
         public Text DebugText;
 
+        public MemoryManager GameManager;
+        private bool isGameManagerInitialized;
+        public MemoryPlayer LocalPlayer;
+
         ScreenFader sf;
 
         void Awake() {
@@ -67,6 +71,12 @@ namespace BNG {
             if (PhotonNetwork.LevelLoadingProgress > 0 && PhotonNetwork.LevelLoadingProgress < 1) {
                 Debug.Log(PhotonNetwork.LevelLoadingProgress);
             }
+
+            if (PhotonNetwork.IsConnected)
+            {
+                if (!isGameManagerInitialized)
+                    GameManager.InstantiateCards();
+            }
         }
 
         public override void OnJoinRoomFailed(short returnCode, string message) {
@@ -92,6 +102,8 @@ namespace BNG {
             base.OnPlayerEnteredRoom(newPlayer);
 
             float playerCount = PhotonNetwork.IsConnected && PhotonNetwork.CurrentRoom != null ? PhotonNetwork.CurrentRoom.PlayerCount : 0;
+
+            LocalPlayer.PhotonPlayer = newPlayer;
 
             LogText("<color=white>Connected players : " + playerCount + "</color>");           
         }

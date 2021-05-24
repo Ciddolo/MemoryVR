@@ -1,20 +1,50 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Photon.Pun;
 
-public class MemoryCard : MonoBehaviour
+public enum ColorMaterial
+{
+    Default,
+    Visible,
+    Selected
+}
+
+public class MemoryCard : MonoBehaviour, IPunObservable
 {
     public bool IsShowing { get { return isShowing; } }
     public bool WasFound { get { return wasFound; } }
 
     public MeshRenderer CurrentMeshRenderer;
 
-    public Material DefaultMaterial;
-    public Material ColorMaterial;
-    public Material SelectionMaterial;
+    public List<Material> Materials;
 
     private bool isShowing;
     private bool wasFound;
+
+    private MemoryManager gameManager;
+
+    private PhotonView view;
+    private int indexMaterial;
+    private int visibility = 1;
+    private int oldIndexMaterial;
+    
+    private void Start()
+    {
+        view = GetComponent<PhotonView>();
+        gameManager = transform.parent.parent.GetComponent<MemoryManager>();
+    }
+
+    private void Update()
+    {
+        if (indexMaterial != oldIndexMaterial)
+            CurrentMeshRenderer.material = Materials[indexMaterial];
+
+        if (visibility == 0)
+            gameObject.SetActive(false);
+        else if (visibility == 1)
+            gameObject.SetActive(true);
+    }
 
     public void ShowCard()
     {
@@ -22,7 +52,10 @@ public class MemoryCard : MonoBehaviour
         if (wasFound) return;
 
         isShowing = true;
-        CurrentMeshRenderer.material = ColorMaterial;
+        indexMaterial = 1;
+        CurrentMeshRenderer.material = Materials[indexMaterial];
+
+        gameManager.UsePlayerMove();
     }
 
     public void HideCard()
@@ -31,7 +64,8 @@ public class MemoryCard : MonoBehaviour
         if (wasFound) return;
 
         isShowing = false;
-        CurrentMeshRenderer.material = DefaultMaterial;
+        indexMaterial = 0;
+        CurrentMeshRenderer.material = Materials[indexMaterial];
     }
 
     public void SelectCard()
@@ -39,7 +73,8 @@ public class MemoryCard : MonoBehaviour
         if (isShowing) return;
         if (wasFound) return;
 
-        CurrentMeshRenderer.material = SelectionMaterial;
+        indexMaterial = 2;
+        CurrentMeshRenderer.material = Materials[indexMaterial];
     }
 
     public void DeselectCard()
@@ -47,12 +82,13 @@ public class MemoryCard : MonoBehaviour
         if (isShowing) return;
         if (wasFound) return;
 
-        CurrentMeshRenderer.material = DefaultMaterial;
+        indexMaterial = 0;
+        CurrentMeshRenderer.material = Materials[indexMaterial];
     }
 
     public void SetColor(Material newColor)
     {
-        ColorMaterial = newColor;
+        Materials[(int)ColorMaterial.Visible] = newColor;
     }
 
     public void ResetCard()
@@ -60,6 +96,23 @@ public class MemoryCard : MonoBehaviour
         wasFound = false;
         isShowing = false;
 
-        CurrentMeshRenderer.material = DefaultMaterial;
+        indexMaterial = 0;
+        CurrentMeshRenderer.material = Materials[indexMaterial];
+    }
+
+    public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
+    {
+        if (stream.IsWriting && view.IsMine)
+        {
+            stream.SendNext(visibility);
+            stream.SendNext(indexMaterial);
+        }
+        else
+        {
+            visibility = (int)stream.ReceiveNext();
+
+            oldIndexMaterial = indexMaterial;
+            indexMaterial = (int)stream.ReceiveNext();
+        }
     }
 }

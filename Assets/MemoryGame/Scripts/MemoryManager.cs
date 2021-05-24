@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Photon.Pun;
 
 public enum MemoryDifficulty
 {
@@ -22,31 +23,26 @@ public class MemoryManager : MonoBehaviour
 
     private Transform cardsParent;
 
-    void Start()
-    {
-        cardsParent = transform.GetChild(0);
+    private PhotonView view;
 
-        InstantiateCards();
+    private List<MemoryPlayer> players;
+    private MemoryPlayer currentPlayer;
+
+    void Awake()
+    {
+        view = GetComponent<PhotonView>();
+
+        cardsParent = transform.GetChild(0);
     }
 
-    private void InstantiateCards()
+    public void InstantiateCards()
     {
         for (int i = 0; i < (int)MemoryDifficulty.Hard; i++)
         {
-            GameObject currentCard = Instantiate(CardPrefab);
+            GameObject currentCard = PhotonNetwork.Instantiate("MemoryCard", Vector3.zero, Quaternion.identity);
             currentCard.transform.SetParent(cardsParent);
             currentCard.SetActive(false);
         }
-    }
-
-    public void SetDifficulty(int newDifficulty)
-    {
-        difficulty = (MemoryDifficulty)newDifficulty;
-    }
-
-    public void SetDifficulty(MemoryDifficulty newDifficulty)
-    {
-        difficulty = newDifficulty;
     }
 
     public void PlaceCards()
@@ -90,5 +86,69 @@ public class MemoryManager : MonoBehaviour
 
             currentCard.transform.localPosition = new Vector3(currentColumn * (cardWidth + ColumnsOffset), 0.0f, currentRow * (cardHeight + RowsOffset));
         }
+    }
+
+    public void SetDifficulty(MemoryDifficulty newDifficulty)
+    {
+        difficulty = newDifficulty;
+    }
+
+    public void SetDifficulty(int newDifficulty)
+    {
+        difficulty = (MemoryDifficulty)newDifficulty;
+    }
+
+    public void AddPlayer(MemoryPlayer newPlayer)
+    {
+        if (players.Count >= 2) return;
+
+        players.Add(newPlayer);
+
+        if (players.Count >= 2)
+            FirstPlayer();
+    }
+
+    public void FirstPlayer()
+    {
+        int index = Random.Range(0.0f, 100.0f) > 50.0f ? 0 : 1;
+
+        currentPlayer = players[index];
+        currentPlayer.IsMyTurn = true;
+        currentPlayer.MovesCounter = 2;
+        GiveOwner();
+    }
+
+    public void UsePlayerMove()
+    {
+        currentPlayer.MovesCounter--;
+        if (currentPlayer.MovesCounter <= 0)
+            ChangePlayer();
+    }
+
+    public void ChangePlayer()
+    {
+        currentPlayer.IsMyTurn = false;
+        RemoveOwner();
+
+        if (currentPlayer == players[0])
+            currentPlayer = players[1];
+        else
+            currentPlayer = players[0];
+
+        currentPlayer.IsMyTurn = true;
+        currentPlayer.MovesCounter = 2;
+        GiveOwner();
+    }
+
+    public void GiveOwner()
+    {
+        for (int i = 0; i < cardsParent.childCount; i++)
+            cardsParent.GetChild(i).GetComponent<PhotonView>().TransferOwnership(currentPlayer.PhotonPlayer);
+    }
+
+    public void RemoveOwner()
+    {
+        for (int i = 0; i < cardsParent.childCount; i++)
+            cardsParent.GetChild(i).GetComponent<PhotonView>().RequestOwnership();
     }
 }
