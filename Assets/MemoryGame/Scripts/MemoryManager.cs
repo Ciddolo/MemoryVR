@@ -33,6 +33,8 @@ public class MemoryManager : MonoBehaviour
         view = GetComponent<PhotonView>();
 
         cardsParent = transform.GetChild(0);
+
+        players = new List<MemoryPlayer>();
     }
 
     public void InstantiateCards()
@@ -98,11 +100,43 @@ public class MemoryManager : MonoBehaviour
         difficulty = (MemoryDifficulty)newDifficulty;
     }
 
-    public void AddPlayer(MemoryPlayer newPlayer)
+    public void SetDifficultyEasy()
     {
-        if (players.Count >= 2) return;
+        difficulty = MemoryDifficulty.Easy;
+    }
+
+    public void SetDifficultyMedium()
+    {
+        difficulty = MemoryDifficulty.Medium;
+    }
+
+    public void SetDifficultyHard()
+    {
+        difficulty = MemoryDifficulty.Hard;
+    }
+
+    public void AddPlayer(MemoryPlayer newPlayer, ref bool result)
+    {
+        if (!newPlayer)
+        {
+            result = false;
+            return;
+        }
+
+        if (players.Count >= 2)
+        {
+            result = false;
+            return;
+        }
+
+        if (players.Contains(newPlayer))
+        {
+            result = false;
+            return;
+        }
 
         players.Add(newPlayer);
+        result = true;
 
         if (players.Count >= 2)
             FirstPlayer();

@@ -5,8 +5,10 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace BNG {
-    public class NetworkManager : MonoBehaviourPunCallbacks {
+namespace BNG
+{
+    public class NetworkManager : MonoBehaviourPunCallbacks
+    {
 
         /// <summary>
         /// Maximum number of players per room. If the room is full, a new radom one will be created.
@@ -34,111 +36,163 @@ namespace BNG {
 
         public MemoryManager GameManager;
         private bool isGameManagerInitialized;
+
         public MemoryPlayer LocalPlayer;
+        private bool isLocalPLayerRegistered;
+
+        public Button ButtonStart;
+        public Button ButtonEasy;
+        public Button ButtonMedium;
+        public Button ButtonHard;
+        private bool buttonsInitialized;
 
         ScreenFader sf;
 
-        void Awake() {
+        void Awake()
+        {
             // Required if you want to call PhotonNetwork.LoadLevel() 
             PhotonNetwork.AutomaticallySyncScene = true;
 
-            if (dontDestroyOnLoad) {
+            if (dontDestroyOnLoad)
+            {
                 DontDestroyOnLoad(this.gameObject);
             }
 
-            if(Camera.main != null) {
+            if (Camera.main != null)
+            {
                 sf = Camera.main.GetComponentInChildren<ScreenFader>(true);
             }
         }
 
-        void Start() {
+        void Start()
+        {
             // Connect to Random Room if Connected to Photon Server
-            if (PhotonNetwork.IsConnected) {
-                if (JoinRoomOnStart) {
+            if (PhotonNetwork.IsConnected)
+            {
+                if (JoinRoomOnStart)
+                {
                     LogText("<color=white>Joining Room : " + JoinRoomName + "</color>");
                     PhotonNetwork.JoinRoom(JoinRoomName);
                 }
             }
             // Otherwise establish a new connection. We can then connect via OnConnectedToMaster
-            else {
+            else
+            {
                 PhotonNetwork.ConnectUsingSettings();
                 PhotonNetwork.GameVersion = GameVersion;
             }
         }
 
-        void Update() {
+        void Update()
+        {
             // Show Loading Progress
-            if (PhotonNetwork.LevelLoadingProgress > 0 && PhotonNetwork.LevelLoadingProgress < 1) {
+            if (PhotonNetwork.LevelLoadingProgress > 0 && PhotonNetwork.LevelLoadingProgress < 1)
+            {
                 Debug.Log(PhotonNetwork.LevelLoadingProgress);
             }
 
-            if (PhotonNetwork.IsConnected)
+            if (PhotonNetwork.InRoom)
             {
+                if (!GameManager)
+                {
+                    GameObject go = PhotonNetwork.Instantiate("MemoryManager", Vector3.zero, Quaternion.identity);
+                    GameManager = go.GetComponent<MemoryManager>();
+                }
+
                 if (!isGameManagerInitialized)
+                {
                     GameManager.InstantiateCards();
+                    isGameManagerInitialized = true;
+                }
+
+                if (!isLocalPLayerRegistered)
+                    GameManager.AddPlayer(LocalPlayer, ref isLocalPLayerRegistered);
+
+                if (!buttonsInitialized)
+                {
+                    if (!isGameManagerInitialized) return;
+
+                    ButtonStart.onButtonDown.AddListener(GameManager.PlaceCards);
+                    ButtonEasy.onButtonDown.AddListener(GameManager.SetDifficultyEasy);
+                    ButtonMedium.onButtonDown.AddListener(GameManager.SetDifficultyMedium);
+                    ButtonHard.onButtonDown.AddListener(GameManager.SetDifficultyHard);
+                    buttonsInitialized = true;
+                }
             }
         }
 
-        public override void OnJoinRoomFailed(short returnCode, string message) {
+        public override void OnJoinRoomFailed(short returnCode, string message)
+        {
             LogText("<color=white>Room does not exist. Creating </color><color=yellow>" + JoinRoomName + "</color>");
             PhotonNetwork.CreateRoom(JoinRoomName, new RoomOptions { MaxPlayers = maxPlayersPerRoom }, TypedLobby.Default);
         }
 
-        public override void OnJoinRandomFailed(short returnCode, string message) {
+        public override void OnJoinRandomFailed(short returnCode, string message)
+        {
             Debug.Log("<color=red>OnJoinRandomFailed Failed, Error : " + message + "</color>");
         }
 
-        public override void OnConnectedToMaster() {
+        public override void OnConnectedToMaster()
+        {
 
             LogText("<color=white>Connected to Master Server. \n</color>");
 
-            if (JoinRoomOnStart) {
+            if (JoinRoomOnStart)
+            {
                 LogText("<color=white>Joining Room : </color><color=aqua>" + JoinRoomName + "</color>");
                 PhotonNetwork.JoinRoom(JoinRoomName);
             }
         }
 
-        public override void OnPlayerEnteredRoom(Player newPlayer) {
+        public override void OnPlayerEnteredRoom(Player newPlayer)
+        {
             base.OnPlayerEnteredRoom(newPlayer);
 
             float playerCount = PhotonNetwork.IsConnected && PhotonNetwork.CurrentRoom != null ? PhotonNetwork.CurrentRoom.PlayerCount : 0;
 
             LocalPlayer.PhotonPlayer = newPlayer;
 
-            LogText("<color=white>Connected players : " + playerCount + "</color>");           
+            LogText("<color=white>Connected players : " + playerCount + "</color>");
         }
 
-        public override void OnJoinedRoom() {
+        public override void OnJoinedRoom()
+        {
 
             LogText("<color=white>Joined Room. Creating Remote Player Representation.</color>");
 
             // Network Instantiate the object used to represent our player. This will have a View on it and represent the player         
             GameObject player = PhotonNetwork.Instantiate(RemotePlayerObjectName, new Vector3(0f, 0f, 0f), Quaternion.identity, 0);
             NetworkPlayer np = player.GetComponent<NetworkPlayer>();
-            if (np) {
+            if (np)
+            {
                 np.transform.name = "MyRemotePlayer";
                 np.AssignPlayerObjects();
             }
         }
 
-        public override void OnDisconnected(DisconnectCause cause) {
+        public override void OnDisconnected(DisconnectCause cause)
+        {
             LogText("<color=red>Disconnected from PUN due to cause : " + cause + "</color>");
 
-            if (!PhotonNetwork.ReconnectAndRejoin()) {
+            if (!PhotonNetwork.ReconnectAndRejoin())
+            {
                 LogText("<color=white>Reconnect and Joined.</color>");
             }
 
             base.OnDisconnected(cause);
         }
 
-        public void LoadScene(string sceneName) {
+        public void LoadScene(string sceneName)
+        {
             // Fade Screen out
             StartCoroutine(doLoadLevelWithFade(sceneName));
         }
 
-        IEnumerator doLoadLevelWithFade(string sceneName) {
+        IEnumerator doLoadLevelWithFade(string sceneName)
+        {
 
-            if (sf) {
+            if (sf)
+            {
                 sf.DoFadeIn();
                 yield return new WaitForSeconds(sf.SceneFadeInDelay);
             }
@@ -148,10 +202,12 @@ namespace BNG {
             yield return null;
         }
 
-        void LogText(string message) {
+        void LogText(string message)
+        {
 
             // Output to worldspace to help with debugging.
-            if (DebugText) {
+            if (DebugText)
+            {
                 DebugText.text += "\n" + message;
             }
 

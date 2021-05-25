@@ -32,7 +32,7 @@ public class MemoryCard : MonoBehaviour, IPunObservable
     private void Start()
     {
         view = GetComponent<PhotonView>();
-        gameManager = transform.parent.parent.GetComponent<MemoryManager>();
+        gameManager = transform.parent.GetComponent<MemoryManager>();
     }
 
     private void Update()

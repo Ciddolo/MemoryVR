@@ -6,7 +6,6 @@ using Photon.Realtime;
 
 public class MemoryPlayer : MonoBehaviour
 {
-    public MemoryManager GameManager;
     public Transform RightHand;
 
     public float MaxDistance = 50.0f;
@@ -17,11 +16,6 @@ public class MemoryPlayer : MonoBehaviour
     public Player PhotonPlayer;
 
     private MemoryCard currentCard;
-
-    private void Start()
-    {
-        GameManager.AddPlayer(this);
-    }
 
     private void Update()
     {
