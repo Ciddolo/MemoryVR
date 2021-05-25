@@ -10,45 +10,86 @@ public enum MemoryDifficulty
     Hard = 12
 }
 
-public class MemoryManager : MonoBehaviour
+public class MemoryManager : MonoBehaviour, IPunObservable
 {
-    public MemoryDifficulty GetDifficulty { get { return difficulty; } }
-
-    public GameObject CardPrefab;
-
-    public float ColumnsOffset = 0.3f;
-    public float RowsOffset = 0.3f;
-
-    private MemoryDifficulty difficulty = MemoryDifficulty.Medium;
+    private readonly float columnsOffset = 0.3f;
+    private readonly float rowsOffset = 0.3f;
+    private readonly float cardWidth = 0.4f;
+    private readonly float cardHeight = 0.6f;
 
     private Transform cardsParent;
-
-    private PhotonView view;
 
     private List<MemoryPlayer> players;
     private MemoryPlayer currentPlayer;
 
+    private PhotonView view;
+
+    public int difficulty;
+    public int syncDifficulty;
+
+    public Vector3 cardsParentPosition;
+    public Vector3 syncCardsParentPosition;
+
+    public int activeCards;
+    public int syncActiveCards;
+
+    public Vector3[] cardPositions;
+    public Vector3[] syncCardPositions;
+
     void Awake()
     {
+        cardsParent = transform.GetChild(0);
+        players = new List<MemoryPlayer>();
         view = GetComponent<PhotonView>();
 
-        cardsParent = transform.GetChild(0);
+        difficulty = 8;
+        syncDifficulty = 8;
 
-        players = new List<MemoryPlayer>();
+        cardsParentPosition = Vector3.zero;
+        syncCardsParentPosition = Vector3.zero;
+
+        activeCards = 0;
+        syncActiveCards = 0;
+
+        cardPositions = new Vector3[(int)MemoryDifficulty.Hard];
+        syncCardPositions = new Vector3[(int)MemoryDifficulty.Hard];        
     }
 
-    public void InstantiateCards()
+    private void Update()
     {
-        for (int i = 0; i < (int)MemoryDifficulty.Hard; i++)
+        if (!view.IsMine)
         {
-            GameObject currentCard = PhotonNetwork.Instantiate("MemoryCard", Vector3.zero, Quaternion.identity);
-            currentCard.transform.SetParent(cardsParent);
-            currentCard.SetActive(false);
+            Debug.Log("NOT MINE");
+            difficulty = syncDifficulty;
+            SetDifficulty(difficulty);
+
+            cardsParentPosition = syncCardsParentPosition;
+            cardsParent.position = cardsParentPosition;
+
+            activeCards = syncActiveCards;
+            for (int i = 0; i < cardsParent.childCount; i++)
+                cardsParent.GetChild(i).gameObject.SetActive(i < activeCards);
+
+            cardPositions = syncCardPositions;
+            for (int i = 0; i < activeCards; i++)
+                cardsParent.GetChild(i).localPosition = cardPositions[i];
         }
     }
 
+    //public void InstantiateCards()
+    //{
+    //    for (int i = 0; i < (int)MemoryDifficulty.Hard; i++)
+    //    {
+    //        GameObject currentCard = PhotonNetwork.Instantiate("MemoryCard", Vector3.zero, Quaternion.identity);
+    //        currentCard.transform.SetParent(cardsParent);
+    //        currentCard.SetActive(false);
+    //    }
+    //}
+
     public void PlaceCards()
     {
+        //if (!view.IsMine) return;
+
         for (int i = 0; i < cardsParent.childCount; i++)
         {
             GameObject currentCard = cardsParent.GetChild(i).gameObject;
@@ -56,63 +97,51 @@ public class MemoryManager : MonoBehaviour
             currentCard.SetActive(false);
         }
 
-        int numberOfCards = (int)difficulty;
+        activeCards = (int)difficulty;
         int currentColumn;
         int currentRow = -1;
-
-        float cardWidth = 0.4f;
-        float cardHeight = 0.6f;
 
         float tableHeight = 0.5f;
 
         int rows = 2;
-        if (difficulty == MemoryDifficulty.Hard)
+        if (difficulty == (int)MemoryDifficulty.Hard)
             rows = 3;
 
-        float x = numberOfCards / rows * cardWidth;
-        x += (numberOfCards / rows - 1.0f) * ColumnsOffset;
+        float x = activeCards / rows * cardWidth;
+        x += (activeCards / rows - 1.0f) * columnsOffset;
         x /= -2.0f;
         float z = rows * cardHeight;
-        z += (rows - 1.0f) * RowsOffset;
+        z += (rows - 1.0f) * rowsOffset;
         z /= -2.0f;
 
         cardsParent.position = new Vector3(x, tableHeight, z);
+        cardsParentPosition = cardsParent.position;
 
-        for (int i = 0; i < numberOfCards; i++)
+        for (int i = 0; i < activeCards; i++)
         {
             GameObject currentCard = cardsParent.GetChild(i).gameObject;
             currentCard.SetActive(true);
 
-            currentColumn = i % (numberOfCards / rows);
+            currentColumn = i % (activeCards / rows);
             if (currentColumn == 0) currentRow++;
 
-            currentCard.transform.localPosition = new Vector3(currentColumn * (cardWidth + ColumnsOffset), 0.0f, currentRow * (cardHeight + RowsOffset));
+            currentCard.transform.localPosition = new Vector3(currentColumn * (cardWidth + columnsOffset), 0.0f, currentRow * (cardHeight + rowsOffset));
+            cardPositions[i] = currentCard.transform.localPosition;
         }
     }
 
     public void SetDifficulty(MemoryDifficulty newDifficulty)
     {
-        difficulty = newDifficulty;
+        if (!view.IsMine) return;
+
+        difficulty = (int)newDifficulty;
     }
 
     public void SetDifficulty(int newDifficulty)
     {
-        difficulty = (MemoryDifficulty)newDifficulty;
-    }
+        if (!view.IsMine) return;
 
-    public void SetDifficultyEasy()
-    {
-        difficulty = MemoryDifficulty.Easy;
-    }
-
-    public void SetDifficultyMedium()
-    {
-        difficulty = MemoryDifficulty.Medium;
-    }
-
-    public void SetDifficultyHard()
-    {
-        difficulty = MemoryDifficulty.Hard;
+        difficulty = newDifficulty;
     }
 
     public void AddPlayer(MemoryPlayer newPlayer, ref bool result)
@@ -184,5 +213,27 @@ public class MemoryManager : MonoBehaviour
     {
         for (int i = 0; i < cardsParent.childCount; i++)
             cardsParent.GetChild(i).GetComponent<PhotonView>().RequestOwnership();
+    }
+
+    public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
+    {
+        if (stream.IsWriting && view.IsMine)
+        {
+            stream.SendNext(difficulty);
+            stream.SendNext(cardsParentPosition);
+            stream.SendNext(activeCards);
+
+            for (int i = 0; i < cardPositions.Length; i++)
+                stream.SendNext(cardPositions[i]);
+        }
+        else
+        {
+            syncDifficulty = (int)stream.ReceiveNext();
+            syncCardsParentPosition = (Vector3)stream.ReceiveNext();
+            syncActiveCards = (int)stream.ReceiveNext();
+
+            for (int i = 0; i < cardPositions.Length; i++)
+                syncCardPositions[i] = (Vector3)stream.ReceiveNext();
+        }
     }
 }
