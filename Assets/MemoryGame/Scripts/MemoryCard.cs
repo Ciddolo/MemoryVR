@@ -26,9 +26,8 @@ public class MemoryCard : MonoBehaviour, IPunObservable
 
     private PhotonView view;
     private int indexMaterial;
-    private int visibility = 1;
     private int oldIndexMaterial;
-    
+
     private void Start()
     {
         view = GetComponent<PhotonView>();
@@ -38,12 +37,10 @@ public class MemoryCard : MonoBehaviour, IPunObservable
     private void Update()
     {
         if (indexMaterial != oldIndexMaterial)
+        {
+            oldIndexMaterial = indexMaterial;
             CurrentMeshRenderer.material = Materials[indexMaterial];
-
-        if (visibility == 0)
-            gameObject.SetActive(false);
-        else if (visibility == 1)
-            gameObject.SetActive(true);
+        }
     }
 
     public void ShowCard()
@@ -53,7 +50,6 @@ public class MemoryCard : MonoBehaviour, IPunObservable
 
         isShowing = true;
         indexMaterial = 1;
-        CurrentMeshRenderer.material = Materials[indexMaterial];
 
         gameManager.UsePlayerMove();
     }
@@ -64,8 +60,7 @@ public class MemoryCard : MonoBehaviour, IPunObservable
         if (wasFound) return;
 
         isShowing = false;
-        indexMaterial = 0;
-        CurrentMeshRenderer.material = Materials[indexMaterial];
+        indexMaterial = (int)ColorMaterial.Default;
     }
 
     public void SelectCard()
@@ -73,8 +68,7 @@ public class MemoryCard : MonoBehaviour, IPunObservable
         if (isShowing) return;
         if (wasFound) return;
 
-        indexMaterial = 2;
-        CurrentMeshRenderer.material = Materials[indexMaterial];
+        indexMaterial = (int)ColorMaterial.Selected;
     }
 
     public void DeselectCard()
@@ -82,8 +76,7 @@ public class MemoryCard : MonoBehaviour, IPunObservable
         if (isShowing) return;
         if (wasFound) return;
 
-        indexMaterial = 0;
-        CurrentMeshRenderer.material = Materials[indexMaterial];
+        indexMaterial = (int)ColorMaterial.Default;
     }
 
     public void SetColor(Material newColor)
@@ -96,21 +89,17 @@ public class MemoryCard : MonoBehaviour, IPunObservable
         wasFound = false;
         isShowing = false;
 
-        indexMaterial = 0;
-        CurrentMeshRenderer.material = Materials[indexMaterial];
+        indexMaterial = (int)ColorMaterial.Default;
     }
 
     public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
     {
-        if (stream.IsWriting && view.IsMine)
+        if (stream.IsWriting)
         {
-            stream.SendNext(visibility);
             stream.SendNext(indexMaterial);
         }
         else
         {
-            visibility = (int)stream.ReceiveNext();
-
             oldIndexMaterial = indexMaterial;
             indexMaterial = (int)stream.ReceiveNext();
         }

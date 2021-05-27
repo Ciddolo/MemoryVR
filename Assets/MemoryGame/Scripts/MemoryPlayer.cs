@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using BNG;
+using Photon.Pun;
 using Photon.Realtime;
 
 public class MemoryPlayer : MonoBehaviour
@@ -10,12 +11,14 @@ public class MemoryPlayer : MonoBehaviour
 
     public float MaxDistance = 50.0f;
 
-    public bool IsMyTurn;
-    public int MovesCounter;
-
-    public Player PhotonPlayer;
-
     private MemoryCard currentCard;
+
+    private PhotonView view;
+
+    private void Start()
+    {
+        view = GetComponent<PhotonView>();
+    }
 
     private void Update()
     {
@@ -24,49 +27,37 @@ public class MemoryPlayer : MonoBehaviour
 
     private void PointCard()
     {
-        if (!IsMyTurn) return;
-
         Physics.Raycast(RightHand.position, RightHand.forward, out RaycastHit hitInfo, MaxDistance);
-        MemoryCard pointedCard = null;
         if (hitInfo.collider)
         {
-            if (hitInfo.collider.GetComponent<MemoryCard>())
-                pointedCard = hitInfo.collider.GetComponent<MemoryCard>();
+            MemoryCard pointedCard = hitInfo.collider.GetComponent<MemoryCard>();
+
+            if (pointedCard)
+                CardInteraction(pointedCard);
+            else
+                StopCardInteraction();
         }
 
-        if (!pointedCard)
-        {
-            DeselectCard();
-            return;
-        }
-
-        if (currentCard != pointedCard)
-            DeselectCard();
-
-        SelectCard(pointedCard);
-
-        if (InputBridge.Instance.RightTriggerDown || InputBridge.Instance.AButtonDown)
-            ShowCard();
+        if (currentCard && (InputBridge.Instance.RightTriggerDown || InputBridge.Instance.AButtonDown))
+            currentCard.ShowCard();
     }
 
-    private void SelectCard(MemoryCard newCard)
+    private void CardInteraction(MemoryCard newCard)
     {
+        if (currentCard == newCard) return;
+
+        if (currentCard)
+            currentCard.DeselectCard();
+
         currentCard = newCard;
         currentCard.SelectCard();
     }
 
-    private void DeselectCard()
+    private void StopCardInteraction()
     {
         if (!currentCard) return;
 
         currentCard.DeselectCard();
         currentCard = null;
-    }
-
-    private void ShowCard()
-    {
-        if (!currentCard) return;
-
-        currentCard.ShowCard();
     }
 }

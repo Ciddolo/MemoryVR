@@ -34,17 +34,7 @@ namespace BNG
         [Tooltip("Optional GUI Text element to output debug information.")]
         public Text DebugText;
 
-        //public MemoryManager GameManager;
-        //private bool isGameManagerInitialized;
-
-        //public MemoryPlayer LocalPlayer;
-        //private bool isLocalPLayerRegistered;
-
-        //public Button ButtonStart;
-        //public Button ButtonEasy;
-        //public Button ButtonMedium;
-        //public Button ButtonHard;
-        //private bool buttonsInitialized;
+        public MemoryManager GameManager;
 
         ScreenFader sf;
 
@@ -90,35 +80,6 @@ namespace BNG
             {
                 Debug.Log(PhotonNetwork.LevelLoadingProgress);
             }
-
-            //if (PhotonNetwork.InRoom)
-            //{
-            //    if (!GameManager)
-            //    {
-            //        GameObject go = PhotonNetwork.Instantiate("MemoryManager", Vector3.zero, Quaternion.identity);
-            //        GameManager = go.GetComponent<MemoryManager>();
-            //    }
-
-            //    if (!isGameManagerInitialized)
-            //    {
-            //        GameManager.InstantiateCards();
-            //        isGameManagerInitialized = true;
-            //    }
-
-            //    if (!isLocalPLayerRegistered)
-            //        GameManager.AddPlayer(LocalPlayer, ref isLocalPLayerRegistered);
-
-            //    if (!buttonsInitialized)
-            //    {
-            //        if (!isGameManagerInitialized) return;
-
-            //        ButtonStart.onButtonDown.AddListener(GameManager.PlaceCards);
-            //        ButtonEasy.onButtonDown.AddListener(GameManager.SetDifficultyEasy);
-            //        ButtonMedium.onButtonDown.AddListener(GameManager.SetDifficultyMedium);
-            //        ButtonHard.onButtonDown.AddListener(GameManager.SetDifficultyHard);
-            //        buttonsInitialized = true;
-            //    }
-            //}
         }
 
         public override void OnJoinRoomFailed(short returnCode, string message)
@@ -149,8 +110,6 @@ namespace BNG
             base.OnPlayerEnteredRoom(newPlayer);
 
             float playerCount = PhotonNetwork.IsConnected && PhotonNetwork.CurrentRoom != null ? PhotonNetwork.CurrentRoom.PlayerCount : 0;
-
-            //LocalPlayer.PhotonPlayer = newPlayer;
 
             LogText("<color=white>Connected players : " + playerCount + "</color>");
         }

@@ -1,7 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using Photon.Pun;
+using Photon.Realtime;
 
 public enum MemoryDifficulty
 {
@@ -19,28 +21,36 @@ public class MemoryManager : MonoBehaviour, IPunObservable
 
     private Transform cardsParent;
 
-    private List<MemoryPlayer> players;
-    private MemoryPlayer currentPlayer;
+    public Text DebugUI;
 
+    [Header("Photon")]
     private PhotonView view;
 
-    public int difficulty;
-    public int syncDifficulty;
+    private int currentPlayerIndex;
+    private int syncCurrentPlayerIndex;
 
-    public Vector3 cardsParentPosition;
-    public Vector3 syncCardsParentPosition;
+    private int playerMoves;
+    private int syncPlayerMoves;
 
-    public int activeCards;
-    public int syncActiveCards;
+    private int difficulty;
+    private int syncDifficulty;
 
-    public Vector3[] cardPositions;
-    public Vector3[] syncCardPositions;
+    private Vector3 cardsParentPosition;
+    private Vector3 syncCardsParentPosition;
+
+    private int activeCards;
+    private int syncActiveCards;
+
+    private Vector3[] cardPositions;
+    private Vector3[] syncCardPositions;
 
     void Awake()
     {
         cardsParent = transform.GetChild(0);
-        players = new List<MemoryPlayer>();
         view = GetComponent<PhotonView>();
+
+        currentPlayerIndex = -1;
+        playerMoves = 2;
 
         difficulty = 8;
         syncDifficulty = 8;
@@ -52,14 +62,17 @@ public class MemoryManager : MonoBehaviour, IPunObservable
         syncActiveCards = 0;
 
         cardPositions = new Vector3[(int)MemoryDifficulty.Hard];
-        syncCardPositions = new Vector3[(int)MemoryDifficulty.Hard];        
+        syncCardPositions = new Vector3[(int)MemoryDifficulty.Hard];
     }
 
     private void Update()
     {
         if (!view.IsMine)
         {
-            Debug.Log("NOT MINE");
+            currentPlayerIndex = syncCurrentPlayerIndex;
+
+            playerMoves = syncPlayerMoves;
+
             difficulty = syncDifficulty;
             SetDifficulty(difficulty);
 
@@ -74,21 +87,45 @@ public class MemoryManager : MonoBehaviour, IPunObservable
             for (int i = 0; i < activeCards; i++)
                 cardsParent.GetChild(i).localPosition = cardPositions[i];
         }
+
+        if (PhotonNetwork.LocalPlayer == PhotonNetwork.PlayerList[currentPlayerIndex])
+        {
+            Debug.Log("TRANSFER");
+            TransferCardsOwner();
+        }
+
+        PrintDebug();
     }
 
-    //public void InstantiateCards()
-    //{
-    //    for (int i = 0; i < (int)MemoryDifficulty.Hard; i++)
-    //    {
-    //        GameObject currentCard = PhotonNetwork.Instantiate("MemoryCard", Vector3.zero, Quaternion.identity);
-    //        currentCard.transform.SetParent(cardsParent);
-    //        currentCard.SetActive(false);
-    //    }
-    //}
+    private void PrintDebug()
+    {
+        string debug = "";
+
+        debug += "\nI'M HOST [" + view.IsMine + "]";
+        debug += "\nCURRENT PLAYER INDEX [" + currentPlayerIndex + "]";
+        debug += "\nPLAYER MOVES [" + playerMoves + "]";
+        debug += "\nDIFFICULTY [" + difficulty + "]";
+        debug += "\nACTIVE CARDS [" + activeCards + "]";
+
+        debug += "\nCARDS OWNER [";
+        if (cardsParent.GetChild(0).GetComponent<PhotonView>().Owner != null)
+            debug += cardsParent.GetChild(0).GetComponent<PhotonView>().Owner.ToString();
+        debug += "]";
+
+        debug += "\nCURRENT PLAYER [ ";
+        if (currentPlayerIndex >= 0)
+            debug += PhotonNetwork.PlayerList[currentPlayerIndex];
+        debug += "]";
+
+        for (int i = 0; i < PhotonNetwork.PlayerList.Length; i++)
+            debug += "\nPLAYER NUMBER [" + PhotonNetwork.PlayerList[i].ToString() + "]";
+
+        DebugUI.text = debug;
+    }
 
     public void PlaceCards()
     {
-        //if (!view.IsMine) return;
+        if (!view.IsMine) return;
 
         for (int i = 0; i < cardsParent.childCount; i++)
         {
@@ -128,6 +165,8 @@ public class MemoryManager : MonoBehaviour, IPunObservable
             currentCard.transform.localPosition = new Vector3(currentColumn * (cardWidth + columnsOffset), 0.0f, currentRow * (cardHeight + rowsOffset));
             cardPositions[i] = currentCard.transform.localPosition;
         }
+
+        FirstPlayer();
     }
 
     public void SetDifficulty(MemoryDifficulty newDifficulty)
@@ -144,81 +183,41 @@ public class MemoryManager : MonoBehaviour, IPunObservable
         difficulty = newDifficulty;
     }
 
-    public void AddPlayer(MemoryPlayer newPlayer, ref bool result)
-    {
-        if (!newPlayer)
-        {
-            result = false;
-            return;
-        }
-
-        if (players.Count >= 2)
-        {
-            result = false;
-            return;
-        }
-
-        if (players.Contains(newPlayer))
-        {
-            result = false;
-            return;
-        }
-
-        players.Add(newPlayer);
-        result = true;
-
-        if (players.Count >= 2)
-            FirstPlayer();
-    }
-
     public void FirstPlayer()
     {
-        int index = Random.Range(0.0f, 100.0f) > 50.0f ? 0 : 1;
+        currentPlayerIndex = Random.Range(0.0f, 100.0f) > 50.0f ? 0 : 1;
 
-        currentPlayer = players[index];
-        currentPlayer.IsMyTurn = true;
-        currentPlayer.MovesCounter = 2;
-        GiveOwner();
+        TransferCardsOwner();
     }
 
     public void UsePlayerMove()
     {
-        currentPlayer.MovesCounter--;
-        if (currentPlayer.MovesCounter <= 0)
+        playerMoves--;
+        if (playerMoves <= 0)
             ChangePlayer();
     }
 
     public void ChangePlayer()
     {
-        currentPlayer.IsMyTurn = false;
-        RemoveOwner();
+        playerMoves = 2;
 
-        if (currentPlayer == players[0])
-            currentPlayer = players[1];
-        else
-            currentPlayer = players[0];
+        currentPlayerIndex = currentPlayerIndex == 0 ? 1 : 0;
 
-        currentPlayer.IsMyTurn = true;
-        currentPlayer.MovesCounter = 2;
-        GiveOwner();
+        TransferCardsOwner();
     }
 
-    public void GiveOwner()
+    public void TransferCardsOwner()
     {
-        for (int i = 0; i < cardsParent.childCount; i++)
-            cardsParent.GetChild(i).GetComponent<PhotonView>().TransferOwnership(currentPlayer.PhotonPlayer);
-    }
-
-    public void RemoveOwner()
-    {
-        for (int i = 0; i < cardsParent.childCount; i++)
-            cardsParent.GetChild(i).GetComponent<PhotonView>().RequestOwnership();
+        for (int i = 0; i < activeCards; i++)
+            cardsParent.GetChild(i).GetComponent<PhotonView>().TransferOwnership(PhotonNetwork.PlayerList[currentPlayerIndex]);        
     }
 
     public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
     {
         if (stream.IsWriting && view.IsMine)
         {
+            stream.SendNext(currentPlayerIndex);
+            stream.SendNext(playerMoves);
             stream.SendNext(difficulty);
             stream.SendNext(cardsParentPosition);
             stream.SendNext(activeCards);
@@ -228,6 +227,8 @@ public class MemoryManager : MonoBehaviour, IPunObservable
         }
         else
         {
+            syncCurrentPlayerIndex = (int)stream.ReceiveNext();
+            syncPlayerMoves = (int)stream.ReceiveNext();
             syncDifficulty = (int)stream.ReceiveNext();
             syncCardsParentPosition = (Vector3)stream.ReceiveNext();
             syncActiveCards = (int)stream.ReceiveNext();
