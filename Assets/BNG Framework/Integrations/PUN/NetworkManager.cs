@@ -119,7 +119,7 @@ namespace BNG
 
             LogText("<color=white>Joined Room. Creating Remote Player Representation.</color>");
 
-            // Network Instantiate the object used to represent our player. This will have a View on it and represent the player         
+            // Network ciddoiate the object used to represent our player. This will have a View on it and represent the player         
             GameObject player = PhotonNetwork.Instantiate(RemotePlayerObjectName, new Vector3(0f, 0f, 0f), Quaternion.identity, 0);
             NetworkPlayer np = player.GetComponent<NetworkPlayer>();
             if (np)
@@ -127,6 +127,9 @@ namespace BNG
                 np.transform.name = "MyRemotePlayer";
                 np.AssignPlayerObjects();
             }
+
+            if (!GameManager.Players.Contains(player.GetComponent<MemoryPlayer>()))
+                GameManager.Players.Add(player.GetComponent<MemoryPlayer>());
         }
 
         public override void OnDisconnected(DisconnectCause cause)

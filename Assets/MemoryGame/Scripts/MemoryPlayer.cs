@@ -60,4 +60,10 @@ public class MemoryPlayer : MonoBehaviour
         currentCard.DeselectCard();
         currentCard = null;
     }
+
+    public void RequestOwnership(Transform cardsParent, int activeCards)
+    {
+        for (int i = 0; i < activeCards; i++)
+            cardsParent.GetChild(i).GetComponent<PhotonView>().RequestOwnership();
+    }
 }

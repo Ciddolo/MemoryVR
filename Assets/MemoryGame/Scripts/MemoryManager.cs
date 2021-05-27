@@ -19,6 +19,8 @@ public class MemoryManager : MonoBehaviour, IPunObservable
     private readonly float cardWidth = 0.4f;
     private readonly float cardHeight = 0.6f;
 
+    public List<MemoryPlayer> Players = new List<MemoryPlayer>();
+
     private Transform cardsParent;
 
     public Text DebugUI;
@@ -88,11 +90,11 @@ public class MemoryManager : MonoBehaviour, IPunObservable
                 cardsParent.GetChild(i).localPosition = cardPositions[i];
         }
 
-        if (PhotonNetwork.LocalPlayer == PhotonNetwork.PlayerList[currentPlayerIndex])
-        {
-            Debug.Log("TRANSFER");
-            TransferCardsOwner();
-        }
+        //if (PhotonNetwork.LocalPlayer == PhotonNetwork.PlayerList[currentPlayerIndex])
+        //{
+        //    Debug.Log("TRANSFER");
+        //    TransferCardsOwner();
+        //}
 
         PrintDebug();
     }
@@ -187,7 +189,7 @@ public class MemoryManager : MonoBehaviour, IPunObservable
     {
         currentPlayerIndex = Random.Range(0.0f, 100.0f) > 50.0f ? 0 : 1;
 
-        TransferCardsOwner();
+        Players[currentPlayerIndex].RequestOwnership(cardsParent, activeCards);
     }
 
     public void UsePlayerMove()
@@ -203,13 +205,7 @@ public class MemoryManager : MonoBehaviour, IPunObservable
 
         currentPlayerIndex = currentPlayerIndex == 0 ? 1 : 0;
 
-        TransferCardsOwner();
-    }
-
-    public void TransferCardsOwner()
-    {
-        for (int i = 0; i < activeCards; i++)
-            cardsParent.GetChild(i).GetComponent<PhotonView>().TransferOwnership(PhotonNetwork.PlayerList[currentPlayerIndex]);        
+        Players[currentPlayerIndex].RequestOwnership(cardsParent, activeCards);
     }
 
     public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
