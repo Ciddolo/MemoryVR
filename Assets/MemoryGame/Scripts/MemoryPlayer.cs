@@ -36,8 +36,12 @@ public class MemoryPlayer : MonoBehaviour
                 StopCardInteraction();
         }
 
-        if (currentCard && (InputBridge.Instance.RightTriggerDown || InputBridge.Instance.AButtonDown))
-            currentCard.ShowCard();
+        if (currentCard && GameManager.PlayerMoves > 0 && (InputBridge.Instance.RightTriggerDown || InputBridge.Instance.AButtonDown))
+        {
+            MemoryCard showedCard = currentCard.ShowCard();
+            if (showedCard)
+                GameManager.UsePlayerMove(showedCard);
+        }
     }
 
     private void CardInteraction(MemoryCard newCard)

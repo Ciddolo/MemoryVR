@@ -12,30 +12,32 @@ public enum ColorMaterial
 
 public class MemoryCard : MonoBehaviour, IPunObservable
 {
-    public bool IsShowing { get { return isShowing; } }
-    public bool WasFound { get { return wasFound; } }
-
     public MeshRenderer CurrentMeshRenderer;
 
-    public List<Material> Materials;
+    public Material[] Materials = new Material[3];
 
-    private bool isShowing;
-    private bool wasFound;
+    public bool IsShowing;
+    public bool WasFound;
 
-    private MemoryManager gameManager;
+    public MemoryManager GameManager;
 
     public PhotonView View;
+
+    private Vector3 syncLocalPosition;
+
     private int indexMaterial;
     private int oldIndexMaterial;
 
     private void Start()
     {
         View = GetComponent<PhotonView>();
-        gameManager = transform.parent.GetComponent<MemoryManager>();
     }
 
     private void Update()
     {
+        if (!View.IsMine)
+            transform.localPosition = syncLocalPosition;
+
         if (indexMaterial != oldIndexMaterial)
         {
             oldIndexMaterial = indexMaterial;
@@ -43,63 +45,62 @@ public class MemoryCard : MonoBehaviour, IPunObservable
         }
     }
 
-    public void ShowCard()
+    public MemoryCard ShowCard()
     {
-        if (isShowing) return;
-        if (wasFound) return;
+        if (IsShowing) return null;
+        if (WasFound) return null;
 
-        isShowing = true;
+        IsShowing = true;
         indexMaterial = 1;
 
-        gameManager.UsePlayerMove();
+        return this;
     }
 
     public void HideCard()
     {
-        if (!isShowing) return;
-        if (wasFound) return;
+        if (!IsShowing) return;
+        if (WasFound) return;
 
-        isShowing = false;
+        IsShowing = false;
         indexMaterial = (int)ColorMaterial.Default;
     }
 
     public void SelectCard()
     {
-        if (isShowing) return;
-        if (wasFound) return;
+        if (IsShowing) return;
+        if (WasFound) return;
 
         indexMaterial = (int)ColorMaterial.Selected;
     }
 
     public void DeselectCard()
     {
-        if (isShowing) return;
-        if (wasFound) return;
+        if (IsShowing) return;
+        if (WasFound) return;
 
         indexMaterial = (int)ColorMaterial.Default;
     }
 
     public void ResetCard()
     {
-        wasFound = false;
-        isShowing = false;
+        WasFound = false;
+        IsShowing = false;
 
         indexMaterial = (int)ColorMaterial.Default;
-    }
-
-    public void SetColor(Material newColor)
-    {
-        Materials[(int)ColorMaterial.Visible] = newColor;
     }
 
     public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
     {
         if (stream.IsWriting)
         {
+            stream.SendNext(transform.localPosition);
+
             stream.SendNext(indexMaterial);
         }
         else
         {
+            syncLocalPosition = (Vector3)stream.ReceiveNext();
+
             oldIndexMaterial = indexMaterial;
             indexMaterial = (int)stream.ReceiveNext();
         }

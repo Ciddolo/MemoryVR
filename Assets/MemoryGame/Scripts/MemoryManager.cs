@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -26,8 +26,12 @@ public class MemoryManager : MonoBehaviour, IPunObservable
     private bool arePlayersRegistered;
 
     private Transform cardsParent;
+    private List<MemoryCard> showedCards = new List<MemoryCard>();
 
     public Text DebugUI;
+
+    private float showTimer;
+    private bool showTime;
 
     [Header("Photon")]
     private PhotonView view;
@@ -35,7 +39,7 @@ public class MemoryManager : MonoBehaviour, IPunObservable
     private int currentPlayerIndex;
     private int syncCurrentPlayerIndex;
 
-    private int playerMoves;
+    public int PlayerMoves;
     private int syncPlayerMoves;
 
     private int difficulty;
@@ -55,8 +59,10 @@ public class MemoryManager : MonoBehaviour, IPunObservable
         cardsParent = transform.GetChild(0);
         view = GetComponent<PhotonView>();
 
+        showTimer = 3.0f;
+
         currentPlayerIndex = -1;
-        playerMoves = 2;
+        PlayerMoves = 2;
 
         difficulty = 8;
         syncDifficulty = 8;
@@ -76,11 +82,19 @@ public class MemoryManager : MonoBehaviour, IPunObservable
         if (!arePlayersRegistered)
             RegisterPlayers();
 
+        if (showTime)
+        {
+            showTimer -= Time.deltaTime;
+
+            if (showTimer <= 0.0f)
+                HideCards();
+        }
+
         if (!view.IsMine)
         {
             currentPlayerIndex = syncCurrentPlayerIndex;
 
-            playerMoves = syncPlayerMoves;
+            PlayerMoves = syncPlayerMoves;
 
             difficulty = syncDifficulty;
             SetDifficulty(difficulty);
@@ -106,7 +120,7 @@ public class MemoryManager : MonoBehaviour, IPunObservable
 
         debug += "\nI'M HOST [<color=red>" + view.IsMine + "</color>]";
         debug += "\nCURRENT PLAYER INDEX [<color=red>" + currentPlayerIndex + "</color>]";
-        debug += "\nPLAYER MOVES [<color=red>" + playerMoves + "</color>]";
+        debug += "\nPLAYER MOVES [<color=red>" + PlayerMoves + "</color>]";
         debug += "\nDIFFICULTY [<color=red>" + difficulty + "</color>]";
         debug += "\nACTIVE CARDS [<color=red>" + activeCards + "</color>]";
 
@@ -116,7 +130,7 @@ public class MemoryManager : MonoBehaviour, IPunObservable
         debug += "</color>]";
 
         debug += "\nCURRENT PHOTON PLAYER [<color=red>";
-        if (currentPlayerIndex >= 0)
+        if (currentPlayerIndex >= 0 && currentPlayerIndex < PhotonNetwork.PlayerList.Length)
             debug += PhotonNetwork.PlayerList[currentPlayerIndex];
         debug += "</color>]";
 
@@ -134,7 +148,7 @@ public class MemoryManager : MonoBehaviour, IPunObservable
     public void PlaceCards()
     {
         if (!view.IsMine) return;
-        Debug.Log("MOOSECA");
+
         for (int i = 0; i < cardsParent.childCount; i++)
         {
             GameObject currentCard = cardsParent.GetChild(i).gameObject;
@@ -174,6 +188,14 @@ public class MemoryManager : MonoBehaviour, IPunObservable
             cardPositions[i] = currentCard.transform.localPosition;
         }
 
+        for (int i = 0; i < activeCards; i++)
+        {
+            Vector3 temp = cardsParent.GetChild(i).localPosition;
+            int randomIndex = Random.Range(i, activeCards);
+            cardsParent.GetChild(i).localPosition = cardsParent.GetChild(randomIndex).localPosition;
+            cardsParent.GetChild(randomIndex).localPosition = temp;
+        }
+
         FirstPlayer();
     }
 
@@ -198,20 +220,34 @@ public class MemoryManager : MonoBehaviour, IPunObservable
         //RegisteredPlayers[currentPlayerIndex].GetComponent<BNG.NetworkPlayer>().RequestCardsOwnership(cardsParent, activeCards);
     }
 
-    public void UsePlayerMove()
+    public void UsePlayerMove(MemoryCard showedCard)
     {
-        playerMoves--;
-        if (playerMoves <= 0)
-            ChangePlayer();
+        showedCards.Add(showedCard);
+
+        if (--PlayerMoves > 0) return;
+
+        if (showedCards[0].Materials[(int)ColorMaterial.Visible] == showedCards[1].Materials[(int)ColorMaterial.Visible])
+        {
+            showedCards[0].WasFound = true;
+            showedCards[1].WasFound = true;
+
+            PlayerMoves = 2;
+        }
+        else
+            showTime = true;
     }
 
-    public void ChangePlayer()
+    private void HideCards()
     {
-        playerMoves = 2;
+        showedCards[0].HideCard();
+        showedCards[1].HideCard();
 
         currentPlayerIndex = currentPlayerIndex == 0 ? 1 : 0;
 
-        //RegisteredPlayers[currentPlayerIndex].GetComponent<BNG.NetworkPlayer>().RequestCardsOwnership(cardsParent, activeCards);
+        PlayerMoves = 2;
+
+        showTimer = 3.0f;
+        showTime = false;
     }
 
     public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
@@ -219,7 +255,7 @@ public class MemoryManager : MonoBehaviour, IPunObservable
         if (stream.IsWriting && view.IsMine)
         {
             stream.SendNext(currentPlayerIndex);
-            stream.SendNext(playerMoves);
+            stream.SendNext(PlayerMoves);
             stream.SendNext(difficulty);
             stream.SendNext(cardsParentPosition);
             stream.SendNext(activeCards);
