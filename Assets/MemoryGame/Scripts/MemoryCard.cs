@@ -24,13 +24,13 @@ public class MemoryCard : MonoBehaviour, IPunObservable
 
     private MemoryManager gameManager;
 
-    private PhotonView view;
+    public PhotonView View;
     private int indexMaterial;
     private int oldIndexMaterial;
 
     private void Start()
     {
-        view = GetComponent<PhotonView>();
+        View = GetComponent<PhotonView>();
         gameManager = transform.parent.GetComponent<MemoryManager>();
     }
 
@@ -79,17 +79,17 @@ public class MemoryCard : MonoBehaviour, IPunObservable
         indexMaterial = (int)ColorMaterial.Default;
     }
 
-    public void SetColor(Material newColor)
-    {
-        Materials[(int)ColorMaterial.Visible] = newColor;
-    }
-
     public void ResetCard()
     {
         wasFound = false;
         isShowing = false;
 
         indexMaterial = (int)ColorMaterial.Default;
+    }
+
+    public void SetColor(Material newColor)
+    {
+        Materials[(int)ColorMaterial.Visible] = newColor;
     }
 
     public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)

@@ -35995,10 +35995,9 @@ GameObject:
   - component: {fileID: 1978627091856323709}
   - component: {fileID: 1978627091856323708}
   - component: {fileID: 1978627091856323710}
-  - component: {fileID: 1163307268992520665}
   m_Layer: 0
   m_Name: RemotePlayer
-  m_TagString: Untagged
+  m_TagString: MemoryPlayer
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -36068,20 +36067,6 @@ MonoBehaviour:
   LeftGrabber: {fileID: 0}
   RightGrabber: {fileID: 0}
   HandAnimationSpeed: 30
---- !u!114 &1163307268992520665
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1978627091856323711}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3d2b460769a3c8343898df24151549c6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  RightHand: {fileID: 1978627090942471983}
-  MaxDistance: 50
 --- !u!1 &1978627091857433343
 GameObject:
   m_ObjectHideFlags: 0

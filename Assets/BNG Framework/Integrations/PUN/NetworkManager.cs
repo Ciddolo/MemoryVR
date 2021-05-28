@@ -127,9 +127,6 @@ namespace BNG
                 np.transform.name = "MyRemotePlayer";
                 np.AssignPlayerObjects();
             }
-
-            if (!GameManager.Players.Contains(player.GetComponent<MemoryPlayer>()))
-                GameManager.Players.Add(player.GetComponent<MemoryPlayer>());
         }
 
         public override void OnDisconnected(DisconnectCause cause)

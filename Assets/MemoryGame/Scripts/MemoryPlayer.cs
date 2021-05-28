@@ -7,18 +7,14 @@ using Photon.Realtime;
 
 public class MemoryPlayer : MonoBehaviour
 {
+    public MemoryManager GameManager;
     public Transform RightHand;
+
+    public bool MyTurn;
 
     public float MaxDistance = 50.0f;
 
     private MemoryCard currentCard;
-
-    private PhotonView view;
-
-    private void Start()
-    {
-        view = GetComponent<PhotonView>();
-    }
 
     private void Update()
     {
@@ -31,6 +27,8 @@ public class MemoryPlayer : MonoBehaviour
         if (hitInfo.collider)
         {
             MemoryCard pointedCard = hitInfo.collider.GetComponent<MemoryCard>();
+
+            if (GameManager.GetCurrentPlayer != PhotonNetwork.LocalPlayer) return;
 
             if (pointedCard)
                 CardInteraction(pointedCard);
@@ -59,11 +57,5 @@ public class MemoryPlayer : MonoBehaviour
 
         currentCard.DeselectCard();
         currentCard = null;
-    }
-
-    public void RequestOwnership(Transform cardsParent, int activeCards)
-    {
-        for (int i = 0; i < activeCards; i++)
-            cardsParent.GetChild(i).GetComponent<PhotonView>().RequestOwnership();
     }
 }

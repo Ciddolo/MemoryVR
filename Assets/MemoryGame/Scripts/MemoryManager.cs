@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using Photon.Pun;
 using Photon.Realtime;
+using BNG;
 
 public enum MemoryDifficulty
 {
@@ -14,12 +15,15 @@ public enum MemoryDifficulty
 
 public class MemoryManager : MonoBehaviour, IPunObservable
 {
+    public Player GetCurrentPlayer { get { return PhotonNetwork.PlayerList[currentPlayerIndex]; } }
+
     private readonly float columnsOffset = 0.3f;
     private readonly float rowsOffset = 0.3f;
     private readonly float cardWidth = 0.4f;
     private readonly float cardHeight = 0.6f;
 
-    public List<MemoryPlayer> Players = new List<MemoryPlayer>();
+    public List<GameObject> RegisteredPlayers = new List<GameObject>();
+    private bool arePlayersRegistered;
 
     private Transform cardsParent;
 
@@ -69,6 +73,9 @@ public class MemoryManager : MonoBehaviour, IPunObservable
 
     private void Update()
     {
+        if (!arePlayersRegistered)
+            RegisterPlayers();
+
         if (!view.IsMine)
         {
             currentPlayerIndex = syncCurrentPlayerIndex;
@@ -90,12 +97,6 @@ public class MemoryManager : MonoBehaviour, IPunObservable
                 cardsParent.GetChild(i).localPosition = cardPositions[i];
         }
 
-        //if (PhotonNetwork.LocalPlayer == PhotonNetwork.PlayerList[currentPlayerIndex])
-        //{
-        //    Debug.Log("TRANSFER");
-        //    TransferCardsOwner();
-        //}
-
         PrintDebug();
     }
 
@@ -103,24 +104,29 @@ public class MemoryManager : MonoBehaviour, IPunObservable
     {
         string debug = "";
 
-        debug += "\nI'M HOST [" + view.IsMine + "]";
-        debug += "\nCURRENT PLAYER INDEX [" + currentPlayerIndex + "]";
-        debug += "\nPLAYER MOVES [" + playerMoves + "]";
-        debug += "\nDIFFICULTY [" + difficulty + "]";
-        debug += "\nACTIVE CARDS [" + activeCards + "]";
+        debug += "\nI'M HOST [<color=red>" + view.IsMine + "</color>]";
+        debug += "\nCURRENT PLAYER INDEX [<color=red>" + currentPlayerIndex + "</color>]";
+        debug += "\nPLAYER MOVES [<color=red>" + playerMoves + "</color>]";
+        debug += "\nDIFFICULTY [<color=red>" + difficulty + "</color>]";
+        debug += "\nACTIVE CARDS [<color=red>" + activeCards + "</color>]";
 
-        debug += "\nCARDS OWNER [";
+        debug += "\nCARDS OWNER [<color=red>";
         if (cardsParent.GetChild(0).GetComponent<PhotonView>().Owner != null)
             debug += cardsParent.GetChild(0).GetComponent<PhotonView>().Owner.ToString();
-        debug += "]";
+        debug += "</color>]";
 
-        debug += "\nCURRENT PLAYER [ ";
+        debug += "\nCURRENT PHOTON PLAYER [<color=red>";
         if (currentPlayerIndex >= 0)
             debug += PhotonNetwork.PlayerList[currentPlayerIndex];
-        debug += "]";
+        debug += "</color>]";
+
+        debug += "\nCURRENT MEMORY PLAYER [<color=red>";
+        if (RegisteredPlayers.Count > 0)
+            debug += RegisteredPlayers[currentPlayerIndex];
+        debug += "</color>]";
 
         for (int i = 0; i < PhotonNetwork.PlayerList.Length; i++)
-            debug += "\nPLAYER NUMBER [" + PhotonNetwork.PlayerList[i].ToString() + "]";
+            debug += "\nPLAYER NUMBER [<color=red>" + PhotonNetwork.PlayerList[i].ToString() + "</color>]";
 
         DebugUI.text = debug;
     }
@@ -128,7 +134,7 @@ public class MemoryManager : MonoBehaviour, IPunObservable
     public void PlaceCards()
     {
         if (!view.IsMine) return;
-
+        Debug.Log("MOOSECA");
         for (int i = 0; i < cardsParent.childCount; i++)
         {
             GameObject currentCard = cardsParent.GetChild(i).gameObject;
@@ -189,7 +195,7 @@ public class MemoryManager : MonoBehaviour, IPunObservable
     {
         currentPlayerIndex = Random.Range(0.0f, 100.0f) > 50.0f ? 0 : 1;
 
-        Players[currentPlayerIndex].RequestOwnership(cardsParent, activeCards);
+        //RegisteredPlayers[currentPlayerIndex].GetComponent<BNG.NetworkPlayer>().RequestCardsOwnership(cardsParent, activeCards);
     }
 
     public void UsePlayerMove()
@@ -205,7 +211,7 @@ public class MemoryManager : MonoBehaviour, IPunObservable
 
         currentPlayerIndex = currentPlayerIndex == 0 ? 1 : 0;
 
-        Players[currentPlayerIndex].RequestOwnership(cardsParent, activeCards);
+        //RegisteredPlayers[currentPlayerIndex].GetComponent<BNG.NetworkPlayer>().RequestCardsOwnership(cardsParent, activeCards);
     }
 
     public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
@@ -232,5 +238,41 @@ public class MemoryManager : MonoBehaviour, IPunObservable
             for (int i = 0; i < cardPositions.Length; i++)
                 syncCardPositions[i] = (Vector3)stream.ReceiveNext();
         }
+    }
+
+    public void RegisterPlayers()
+    {
+        GameObject[] memoryPLayers = GameObject.FindGameObjectsWithTag("MemoryPlayer");
+
+        if (memoryPLayers.Length < 2) return;
+
+        if (view.IsMine)
+        {
+            if (memoryPLayers[0].name == "MyRemotePlayer")
+            {
+                RegisteredPlayers.Add(memoryPLayers[0]);
+                RegisteredPlayers.Add(memoryPLayers[1]);
+            }
+            else
+            {
+                RegisteredPlayers.Add(memoryPLayers[1]);
+                RegisteredPlayers.Add(memoryPLayers[0]);
+            }
+        }
+        else
+        {
+            if (memoryPLayers[0].name != "MyRemotePlayer")
+            {
+                RegisteredPlayers.Add(memoryPLayers[0]);
+                RegisteredPlayers.Add(memoryPLayers[1]);
+            }
+            else
+            {
+                RegisteredPlayers.Add(memoryPLayers[1]);
+                RegisteredPlayers.Add(memoryPLayers[0]);
+            }
+        }
+
+        arePlayersRegistered = RegisteredPlayers.Count >= 2;
     }
 }
