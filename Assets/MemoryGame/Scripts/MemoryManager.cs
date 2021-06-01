@@ -28,10 +28,15 @@ public class MemoryManager : MonoBehaviour, IPunObservable
     private Transform cardsParent;
     private List<MemoryCard> showedCards = new List<MemoryCard>();
 
-    public Text DebugUI;
+    public Text InfoUI;
 
     private float showTimer;
     private bool showTime;
+
+    public Text HostScoreUI;
+    private int hostScore;
+    public Text GuestScoreUI;
+    private int guestScore;
 
     [Header("Photon")]
     private PhotonView view;
@@ -58,6 +63,10 @@ public class MemoryManager : MonoBehaviour, IPunObservable
     {
         cardsParent = transform.GetChild(0);
         view = GetComponent<PhotonView>();
+
+        hostScore = 0;
+        guestScore = 0;
+        PrintScores();
 
         showTimer = 3.0f;
 
@@ -111,43 +120,46 @@ public class MemoryManager : MonoBehaviour, IPunObservable
                 cardsParent.GetChild(i).localPosition = cardPositions[i];
         }
 
-        PrintDebug();
+        PrintInfo();
     }
 
-    private void PrintDebug()
+    private void PrintInfo()
     {
-        string debug = "";
+        string info = "";
 
-        debug += "\nI'M HOST [<color=red>" + view.IsMine + "</color>]";
-        debug += "\nCURRENT PLAYER INDEX [<color=red>" + currentPlayerIndex + "</color>]";
-        debug += "\nPLAYER MOVES [<color=red>" + PlayerMoves + "</color>]";
-        debug += "\nDIFFICULTY [<color=red>" + difficulty + "</color>]";
-        debug += "\nACTIVE CARDS [<color=red>" + activeCards + "</color>]";
+        if (view.IsMine)
+            info += "<color=white>I'M</color> <color=red>HOST</color>";
+        else
+            info += "<color=white>I'M</color> <color=cyan>GUEST</color>";
 
-        debug += "\nCARDS OWNER [<color=red>";
-        if (cardsParent.GetChild(0).GetComponent<PhotonView>().Owner != null)
-            debug += cardsParent.GetChild(0).GetComponent<PhotonView>().Owner.ToString();
-        debug += "</color>]";
+        if (currentPlayerIndex >= 0)
+        {
+            if (currentPlayerIndex == 0)
+                info += "\n<color=white>CURRENT PLAYER:</color> <color=red>HOST</color>";
+            else
+                info += "\n<color=white>CURRENT PLAYER:</color> <color=cyan>GUEST</color>";
+        }
+        else
+            info += "\n<color=white>CURRENT PLAYER:</color> <color=grey>NONE</color>";
 
-        debug += "\nCURRENT PHOTON PLAYER [<color=red>";
-        if (currentPlayerIndex >= 0 && currentPlayerIndex < PhotonNetwork.PlayerList.Length)
-            debug += PhotonNetwork.PlayerList[currentPlayerIndex];
-        debug += "</color>]";
+        info += "\n<color=white>REMAINING MOVES:</color> <color=green>" + PlayerMoves + "</color>";
 
-        debug += "\nCURRENT MEMORY PLAYER [<color=red>";
-        if (RegisteredPlayers.Count > 0)
-            debug += RegisteredPlayers[currentPlayerIndex];
-        debug += "</color>]";
+        InfoUI.text = info;
+    }
 
-        for (int i = 0; i < PhotonNetwork.PlayerList.Length; i++)
-            debug += "\nPLAYER NUMBER [<color=red>" + PhotonNetwork.PlayerList[i].ToString() + "</color>]";
-
-        DebugUI.text = debug;
+    public void PrintScores()
+    {
+        HostScoreUI.text = "<color=red>HOST</color><color=white>\n" + hostScore + "</color>";
+        GuestScoreUI.text = "<color=cyan>GUEST</color><color=white>\n" + guestScore + "</color>";
     }
 
     public void PlaceCards()
     {
         if (!view.IsMine) return;
+
+        hostScore = 0;
+        guestScore = 0;
+        PrintScores();
 
         for (int i = 0; i < cardsParent.childCount; i++)
         {
@@ -232,6 +244,12 @@ public class MemoryManager : MonoBehaviour, IPunObservable
             showedCards[1].WasFound = true;
 
             PlayerMoves = 2;
+            if (currentPlayerIndex == 0)
+                hostScore++;
+            else
+                guestScore++;
+
+            PrintScores();
         }
         else
             showTime = true;
