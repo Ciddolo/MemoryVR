@@ -14,6 +14,8 @@ public class MemoryCard : MonoBehaviour, IPunObservable
 {
     public MeshRenderer CurrentMeshRenderer;
 
+    public int Code;
+
     public Material[] Materials = new Material[3];
 
     public bool IsShowing;
@@ -93,16 +95,23 @@ public class MemoryCard : MonoBehaviour, IPunObservable
     {
         if (stream.IsWriting)
         {
-            stream.SendNext(transform.localPosition);
+            if (View.IsMine)
+                stream.SendNext(transform.localPosition);
 
             stream.SendNext(indexMaterial);
         }
         else
         {
-            syncLocalPosition = (Vector3)stream.ReceiveNext();
+            if (!View.IsMine)
+                syncLocalPosition = (Vector3)stream.ReceiveNext();
 
-            oldIndexMaterial = indexMaterial;
-            indexMaterial = (int)stream.ReceiveNext();
+            if (!GameManager.IsMyTurn())
+            {
+                oldIndexMaterial = indexMaterial;
+                indexMaterial = (int)stream.ReceiveNext();
+            }
+            else
+                stream.ReceiveNext();
         }
     }
 }

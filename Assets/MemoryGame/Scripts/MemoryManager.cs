@@ -15,8 +15,6 @@ public enum MemoryDifficulty
 
 public class MemoryManager : MonoBehaviour, IPunObservable
 {
-    public Player GetCurrentPlayer { get { return PhotonNetwork.PlayerList[currentPlayerIndex]; } }
-
     private readonly float columnsOffset = 0.3f;
     private readonly float rowsOffset = 0.3f;
     private readonly float cardWidth = 0.4f;
@@ -30,6 +28,7 @@ public class MemoryManager : MonoBehaviour, IPunObservable
 
     public Text InfoUI;
 
+    private const float SHOWTIME = 2.0f;
     private float showTimer;
     private bool showTime;
 
@@ -39,7 +38,7 @@ public class MemoryManager : MonoBehaviour, IPunObservable
     private int guestScore;
 
     [Header("Photon")]
-    private PhotonView view;
+    public PhotonView View;
 
     private int currentPlayerIndex;
     private int syncCurrentPlayerIndex;
@@ -62,7 +61,7 @@ public class MemoryManager : MonoBehaviour, IPunObservable
     void Awake()
     {
         cardsParent = transform.GetChild(0);
-        view = GetComponent<PhotonView>();
+        View = GetComponent<PhotonView>();
 
         hostScore = 0;
         guestScore = 0;
@@ -71,7 +70,9 @@ public class MemoryManager : MonoBehaviour, IPunObservable
         showTimer = 3.0f;
 
         currentPlayerIndex = -1;
+
         PlayerMoves = 2;
+        syncPlayerMoves = 2;
 
         difficulty = 8;
         syncDifficulty = 8;
@@ -88,46 +89,102 @@ public class MemoryManager : MonoBehaviour, IPunObservable
 
     private void Update()
     {
-        if (!arePlayersRegistered)
-            RegisterPlayers();
+        RegisterPlayers();
 
-        if (showTime)
-        {
-            showTimer -= Time.deltaTime;
+        Showtime();
 
-            if (showTimer <= 0.0f)
-                HideCards();
-        }
-
-        if (!view.IsMine)
-        {
-            currentPlayerIndex = syncCurrentPlayerIndex;
-
-            PlayerMoves = syncPlayerMoves;
-
-            difficulty = syncDifficulty;
-            SetDifficulty(difficulty);
-
-            cardsParentPosition = syncCardsParentPosition;
-            cardsParent.position = cardsParentPosition;
-
-            activeCards = syncActiveCards;
-            for (int i = 0; i < cardsParent.childCount; i++)
-                cardsParent.GetChild(i).gameObject.SetActive(i < activeCards);
-
-            cardPositions = syncCardPositions;
-            for (int i = 0; i < activeCards; i++)
-                cardsParent.GetChild(i).localPosition = cardPositions[i];
-        }
+        SyncFromHost();
 
         PrintInfo();
+    }
+
+    private void RegisterPlayers()
+    {
+        if (arePlayersRegistered) return;
+
+        GameObject[] memoryPLayers = GameObject.FindGameObjectsWithTag("MemoryPlayer");
+
+        if (memoryPLayers.Length < 2) return;
+
+        if (View.IsMine)
+        {
+            if (memoryPLayers[0].name == "MyRemotePlayer")
+            {
+                RegisteredPlayers.Add(memoryPLayers[0]);
+                RegisteredPlayers.Add(memoryPLayers[1]);
+            }
+            else
+            {
+                RegisteredPlayers.Add(memoryPLayers[1]);
+                RegisteredPlayers.Add(memoryPLayers[0]);
+            }
+        }
+        else
+        {
+            if (memoryPLayers[0].name != "MyRemotePlayer")
+            {
+                RegisteredPlayers.Add(memoryPLayers[0]);
+                RegisteredPlayers.Add(memoryPLayers[1]);
+            }
+            else
+            {
+                RegisteredPlayers.Add(memoryPLayers[1]);
+                RegisteredPlayers.Add(memoryPLayers[0]);
+            }
+        }
+
+        arePlayersRegistered = RegisteredPlayers.Count >= 2;
+    }
+
+    private void Showtime()
+    {
+        if (!showTime) return;
+
+        showTimer -= Time.deltaTime;
+
+        if (showTimer <= 0.0f)
+        {
+            showedCards[0].HideCard();
+            showedCards[1].HideCard();
+
+            currentPlayerIndex = currentPlayerIndex == 0 ? 1 : 0;
+
+            PlayerMoves = 2;
+
+            showTimer = 3.0f;
+            showTime = false;
+        }
+    }
+
+    private void SyncFromHost()
+    {
+        if (!IsMyTurn())
+            PlayerMoves = syncPlayerMoves;
+
+        if (View.IsMine) return;
+
+        currentPlayerIndex = syncCurrentPlayerIndex;
+
+        difficulty = syncDifficulty;
+        SetDifficulty(difficulty);
+
+        cardsParentPosition = syncCardsParentPosition;
+        cardsParent.position = cardsParentPosition;
+
+        activeCards = syncActiveCards;
+        for (int i = 0; i < cardsParent.childCount; i++)
+            cardsParent.GetChild(i).gameObject.SetActive(i < activeCards);
+
+        cardPositions = syncCardPositions;
+        for (int i = 0; i < activeCards; i++)
+            cardsParent.GetChild(i).localPosition = cardPositions[i];
     }
 
     private void PrintInfo()
     {
         string info = "";
 
-        if (view.IsMine)
+        if (View.IsMine)
             info += "<color=white>I'M</color> <color=red>HOST</color>";
         else
             info += "<color=white>I'M</color> <color=cyan>GUEST</color>";
@@ -147,15 +204,22 @@ public class MemoryManager : MonoBehaviour, IPunObservable
         InfoUI.text = info;
     }
 
-    public void PrintScores()
+    private void PrintScores()
     {
         HostScoreUI.text = "<color=red>HOST</color><color=white>\n" + hostScore + "</color>";
         GuestScoreUI.text = "<color=cyan>GUEST</color><color=white>\n" + guestScore + "</color>";
     }
 
+    private void FirstPlayer()
+    {
+        currentPlayerIndex = Random.Range(0.0f, 100.0f) > 50.0f ? 0 : 1;
+
+        //RegisteredPlayers[currentPlayerIndex].GetComponent<BNG.NetworkPlayer>().RequestCardsOwnership(cardsParent, activeCards);
+    }
+
     public void PlaceCards()
     {
-        if (!view.IsMine) return;
+        if (!View.IsMine) return;
 
         hostScore = 0;
         guestScore = 0;
@@ -213,23 +277,16 @@ public class MemoryManager : MonoBehaviour, IPunObservable
 
     public void SetDifficulty(MemoryDifficulty newDifficulty)
     {
-        if (!view.IsMine) return;
+        if (!View.IsMine) return;
 
         difficulty = (int)newDifficulty;
     }
 
     public void SetDifficulty(int newDifficulty)
     {
-        if (!view.IsMine) return;
+        if (!View.IsMine) return;
 
         difficulty = newDifficulty;
-    }
-
-    public void FirstPlayer()
-    {
-        currentPlayerIndex = Random.Range(0.0f, 100.0f) > 50.0f ? 0 : 1;
-
-        //RegisteredPlayers[currentPlayerIndex].GetComponent<BNG.NetworkPlayer>().RequestCardsOwnership(cardsParent, activeCards);
     }
 
     public void UsePlayerMove(MemoryCard showedCard)
@@ -238,7 +295,7 @@ public class MemoryManager : MonoBehaviour, IPunObservable
 
         if (--PlayerMoves > 0) return;
 
-        if (showedCards[0].Materials[(int)ColorMaterial.Visible] == showedCards[1].Materials[(int)ColorMaterial.Visible])
+        if (showedCards[0].Code == showedCards[1].Code)
         {
             showedCards[0].WasFound = true;
             showedCards[1].WasFound = true;
@@ -255,78 +312,40 @@ public class MemoryManager : MonoBehaviour, IPunObservable
             showTime = true;
     }
 
-    private void HideCards()
+    public bool IsMyTurn()
     {
-        showedCards[0].HideCard();
-        showedCards[1].HideCard();
-
-        currentPlayerIndex = currentPlayerIndex == 0 ? 1 : 0;
-
-        PlayerMoves = 2;
-
-        showTimer = 3.0f;
-        showTime = false;
+        return (View.IsMine && currentPlayerIndex == 0) || (!View.IsMine && currentPlayerIndex == 1);
     }
 
     public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
     {
-        if (stream.IsWriting && view.IsMine)
+        if (stream.IsWriting)
         {
-            stream.SendNext(currentPlayerIndex);
-            stream.SendNext(PlayerMoves);
-            stream.SendNext(difficulty);
-            stream.SendNext(cardsParentPosition);
-            stream.SendNext(activeCards);
-
-            for (int i = 0; i < cardPositions.Length; i++)
-                stream.SendNext(cardPositions[i]);
-        }
-        else
-        {
-            syncCurrentPlayerIndex = (int)stream.ReceiveNext();
-            syncPlayerMoves = (int)stream.ReceiveNext();
-            syncDifficulty = (int)stream.ReceiveNext();
-            syncCardsParentPosition = (Vector3)stream.ReceiveNext();
-            syncActiveCards = (int)stream.ReceiveNext();
-
-            for (int i = 0; i < cardPositions.Length; i++)
-                syncCardPositions[i] = (Vector3)stream.ReceiveNext();
-        }
-    }
-
-    public void RegisterPlayers()
-    {
-        GameObject[] memoryPLayers = GameObject.FindGameObjectsWithTag("MemoryPlayer");
-
-        if (memoryPLayers.Length < 2) return;
-
-        if (view.IsMine)
-        {
-            if (memoryPLayers[0].name == "MyRemotePlayer")
+            if (View.IsMine)
             {
-                RegisteredPlayers.Add(memoryPLayers[0]);
-                RegisteredPlayers.Add(memoryPLayers[1]);
-            }
-            else
-            {
-                RegisteredPlayers.Add(memoryPLayers[1]);
-                RegisteredPlayers.Add(memoryPLayers[0]);
+                stream.SendNext(PlayerMoves);
+                stream.SendNext(currentPlayerIndex);
+                stream.SendNext(difficulty);
+                stream.SendNext(cardsParentPosition);
+                stream.SendNext(activeCards);
+
+                for (int i = 0; i < cardPositions.Length; i++)
+                    stream.SendNext(cardPositions[i]);
             }
         }
         else
         {
-            if (memoryPLayers[0].name != "MyRemotePlayer")
+            if (!View.IsMine)
             {
-                RegisteredPlayers.Add(memoryPLayers[0]);
-                RegisteredPlayers.Add(memoryPLayers[1]);
-            }
-            else
-            {
-                RegisteredPlayers.Add(memoryPLayers[1]);
-                RegisteredPlayers.Add(memoryPLayers[0]);
+                syncPlayerMoves = (int)stream.ReceiveNext();
+                syncCurrentPlayerIndex = (int)stream.ReceiveNext();
+                syncDifficulty = (int)stream.ReceiveNext();
+                syncCardsParentPosition = (Vector3)stream.ReceiveNext();
+                syncActiveCards = (int)stream.ReceiveNext();
+
+                for (int i = 0; i < cardPositions.Length; i++)
+                    syncCardPositions[i] = (Vector3)stream.ReceiveNext();
             }
         }
-
-        arePlayersRegistered = RegisteredPlayers.Count >= 2;
     }
 }
