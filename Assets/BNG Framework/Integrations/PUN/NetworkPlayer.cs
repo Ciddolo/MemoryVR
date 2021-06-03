@@ -242,7 +242,7 @@ namespace BNG {
         public void RequestCardsOwnership(Transform cardsParent, int activeCards)
         {
             for (int i = 0; i < activeCards; i++)
-                cardsParent.GetChild(i).GetComponent<PhotonView>().RequestOwnership();
+                cardsParent.GetChild(i).GetComponent<MemoryChangeOwner>().RequestOwnership();
         }
 
         public virtual bool RecentlyRequested(PhotonView view) {

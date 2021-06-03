@@ -17,6 +17,9 @@ public class MemoryPlayer : MonoBehaviour
     private void Update()
     {
         PointCard();
+
+        if (InputBridge.Instance.RightGripDown)
+            GameManager.RequestOwnership();
     }
 
     private void PointCard()
@@ -27,6 +30,12 @@ public class MemoryPlayer : MonoBehaviour
         if (hitInfo.collider)
         {
             MemoryCard pointedCard = hitInfo.collider.GetComponent<MemoryCard>();
+
+            if (!pointedCard.View.IsMine)
+            {
+                Debug.Log("NOT MINE");
+                return;
+            }
 
             if (pointedCard)
                 CardInteraction(pointedCard);

@@ -147,13 +147,23 @@ public class MemoryManager : MonoBehaviour, IPunObservable
             showedCards[0].HideCard();
             showedCards[1].HideCard();
 
-            currentPlayerIndex = currentPlayerIndex == 0 ? 1 : 0;
+            if (currentPlayerIndex == 0)
+                currentPlayerIndex = 1;
+            else
+                currentPlayerIndex = 0;
+
+            RequestOwnership();
 
             PlayerMoves = 2;
 
             showTimer = 3.0f;
             showTime = false;
         }
+    }
+
+    public void RequestOwnership()
+    {
+        RegisteredPlayers[currentPlayerIndex].GetComponent<BNG.NetworkPlayer>().RequestCardsOwnership(cardsParent, activeCards);
     }
 
     private void SyncFromHost()
@@ -214,7 +224,7 @@ public class MemoryManager : MonoBehaviour, IPunObservable
     {
         currentPlayerIndex = Random.Range(0.0f, 100.0f) > 50.0f ? 0 : 1;
 
-        //RegisteredPlayers[currentPlayerIndex].GetComponent<BNG.NetworkPlayer>().RequestCardsOwnership(cardsParent, activeCards);
+        RequestOwnership();
     }
 
     public void PlaceCards()

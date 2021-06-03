@@ -94,6 +94,7 @@ GameObject:
   - component: {fileID: 3794097558458440193}
   - component: {fileID: 2113235132524735874}
   - component: {fileID: 5945720281188843625}
+  - component: {fileID: 7151432101319126194}
   m_Layer: 0
   m_Name: MemoryCard
   m_TagString: Untagged
@@ -165,40 +166,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   CurrentMeshRenderer: {fileID: 5283194611908631252}
+  Code: 0
   Materials:
   - {fileID: 2100000, guid: 7562f81f78da48f4aa6dc47f659a98f3, type: 2}
   - {fileID: 2100000, guid: dd1b05c2e7e926e48a09cfe8a50268b9, type: 2}
   - {fileID: 2100000, guid: f5106972ee0f52e46911ed92b0a6a580, type: 2}
-  EasyMaterials:
-  - {fileID: 2100000, guid: a812e7b1cbca38e429d8f23c5f43d1c3, type: 2}
-  - {fileID: 2100000, guid: a812e7b1cbca38e429d8f23c5f43d1c3, type: 2}
-  - {fileID: 2100000, guid: 18d649b1e9df2bf47ae41d8558e11679, type: 2}
-  - {fileID: 2100000, guid: 18d649b1e9df2bf47ae41d8558e11679, type: 2}
-  - {fileID: 2100000, guid: a08fe4fc6d80bda4bbbe5aeef8ee750d, type: 2}
-  - {fileID: 2100000, guid: a08fe4fc6d80bda4bbbe5aeef8ee750d, type: 2}
-  MediumMaterials:
-  - {fileID: 2100000, guid: a812e7b1cbca38e429d8f23c5f43d1c3, type: 2}
-  - {fileID: 2100000, guid: a812e7b1cbca38e429d8f23c5f43d1c3, type: 2}
-  - {fileID: 2100000, guid: 18d649b1e9df2bf47ae41d8558e11679, type: 2}
-  - {fileID: 2100000, guid: 18d649b1e9df2bf47ae41d8558e11679, type: 2}
-  - {fileID: 2100000, guid: a08fe4fc6d80bda4bbbe5aeef8ee750d, type: 2}
-  - {fileID: 2100000, guid: a08fe4fc6d80bda4bbbe5aeef8ee750d, type: 2}
-  - {fileID: 2100000, guid: 7673b526db8a3a74483020dc7a33e9ef, type: 2}
-  - {fileID: 2100000, guid: 7673b526db8a3a74483020dc7a33e9ef, type: 2}
-  HardMaterials:
-  - {fileID: 2100000, guid: a812e7b1cbca38e429d8f23c5f43d1c3, type: 2}
-  - {fileID: 2100000, guid: a812e7b1cbca38e429d8f23c5f43d1c3, type: 2}
-  - {fileID: 2100000, guid: 18d649b1e9df2bf47ae41d8558e11679, type: 2}
-  - {fileID: 2100000, guid: 18d649b1e9df2bf47ae41d8558e11679, type: 2}
-  - {fileID: 2100000, guid: a08fe4fc6d80bda4bbbe5aeef8ee750d, type: 2}
-  - {fileID: 2100000, guid: a08fe4fc6d80bda4bbbe5aeef8ee750d, type: 2}
-  - {fileID: 2100000, guid: 7673b526db8a3a74483020dc7a33e9ef, type: 2}
-  - {fileID: 2100000, guid: 7673b526db8a3a74483020dc7a33e9ef, type: 2}
-  - {fileID: 2100000, guid: dd1b05c2e7e926e48a09cfe8a50268b9, type: 2}
-  - {fileID: 2100000, guid: dd1b05c2e7e926e48a09cfe8a50268b9, type: 2}
-  - {fileID: 2100000, guid: 6bdab43b97a4aea489d645ac11cfe07e, type: 2}
-  - {fileID: 2100000, guid: 6bdab43b97a4aea489d645ac11cfe07e, type: 2}
   IsShowing: 0
   WasFound: 0
   GameManager: {fileID: 0}
   View: {fileID: 0}
+--- !u!114 &7151432101319126194
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3807808481229143488}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 20cb7fac83cb5b54d90696b11db138d8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
