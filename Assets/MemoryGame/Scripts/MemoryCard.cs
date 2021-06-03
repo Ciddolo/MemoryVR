@@ -37,7 +37,7 @@ public class MemoryCard : MonoBehaviour, IPunObservable
 
     private void Update()
     {
-        if (!View.IsMine)
+        if (!PhotonNetwork.IsMasterClient)
             transform.localPosition = syncLocalPosition;
 
         if (indexMaterial != oldIndexMaterial)
@@ -95,14 +95,15 @@ public class MemoryCard : MonoBehaviour, IPunObservable
     {
         if (stream.IsWriting)
         {
-            if (View.IsMine)
+            if (PhotonNetwork.IsMasterClient)
                 stream.SendNext(transform.localPosition);
 
-            stream.SendNext(indexMaterial);
+            if (GameManager.IsMyTurn())
+                stream.SendNext(indexMaterial);
         }
         else
         {
-            if (!View.IsMine)
+            if (!PhotonNetwork.IsMasterClient)
                 syncLocalPosition = (Vector3)stream.ReceiveNext();
 
             if (!GameManager.IsMyTurn())
@@ -110,8 +111,6 @@ public class MemoryCard : MonoBehaviour, IPunObservable
                 oldIndexMaterial = indexMaterial;
                 indexMaterial = (int)stream.ReceiveNext();
             }
-            else
-                stream.ReceiveNext();
         }
     }
 }

@@ -106,7 +106,7 @@ public class MemoryManager : MonoBehaviour, IPunObservable
 
         if (memoryPLayers.Length < 2) return;
 
-        if (View.IsMine)
+        if (PhotonNetwork.IsMasterClient)
         {
             if (memoryPLayers[0].name == "MyRemotePlayer")
             {
@@ -161,7 +161,7 @@ public class MemoryManager : MonoBehaviour, IPunObservable
         if (!IsMyTurn())
             PlayerMoves = syncPlayerMoves;
 
-        if (View.IsMine) return;
+        if (PhotonNetwork.IsMasterClient) return;
 
         currentPlayerIndex = syncCurrentPlayerIndex;
 
@@ -184,7 +184,7 @@ public class MemoryManager : MonoBehaviour, IPunObservable
     {
         string info = "";
 
-        if (View.IsMine)
+        if (PhotonNetwork.IsMasterClient)
             info += "<color=white>I'M</color> <color=red>HOST</color>";
         else
             info += "<color=white>I'M</color> <color=cyan>GUEST</color>";
@@ -219,7 +219,7 @@ public class MemoryManager : MonoBehaviour, IPunObservable
 
     public void PlaceCards()
     {
-        if (!View.IsMine) return;
+        if (!PhotonNetwork.IsMasterClient) return;
 
         hostScore = 0;
         guestScore = 0;
@@ -277,14 +277,14 @@ public class MemoryManager : MonoBehaviour, IPunObservable
 
     public void SetDifficulty(MemoryDifficulty newDifficulty)
     {
-        if (!View.IsMine) return;
+        if (!PhotonNetwork.IsMasterClient) return;
 
         difficulty = (int)newDifficulty;
     }
 
     public void SetDifficulty(int newDifficulty)
     {
-        if (!View.IsMine) return;
+        if (!PhotonNetwork.IsMasterClient) return;
 
         difficulty = newDifficulty;
     }
@@ -314,14 +314,14 @@ public class MemoryManager : MonoBehaviour, IPunObservable
 
     public bool IsMyTurn()
     {
-        return (View.IsMine && currentPlayerIndex == 0) || (!View.IsMine && currentPlayerIndex == 1);
+        return (PhotonNetwork.IsMasterClient && currentPlayerIndex == 0) || (!PhotonNetwork.IsMasterClient && currentPlayerIndex == 1);
     }
 
     public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
     {
         if (stream.IsWriting)
         {
-            if (View.IsMine)
+            if (PhotonNetwork.IsMasterClient)
             {
                 stream.SendNext(PlayerMoves);
                 stream.SendNext(currentPlayerIndex);
@@ -335,7 +335,7 @@ public class MemoryManager : MonoBehaviour, IPunObservable
         }
         else
         {
-            if (!View.IsMine)
+            if (!PhotonNetwork.IsMasterClient)
             {
                 syncPlayerMoves = (int)stream.ReceiveNext();
                 syncCurrentPlayerIndex = (int)stream.ReceiveNext();
