@@ -96,6 +96,9 @@ public class MemoryManager : MonoBehaviour, IPunObservable
         SyncFromHost();
 
         PrintInfo();
+
+        if (Input.GetKeyDown(KeyCode.Space))
+            Debug.Log("SPACE");
     }
 
     private void RegisterPlayers()
@@ -152,7 +155,9 @@ public class MemoryManager : MonoBehaviour, IPunObservable
             else
                 currentPlayerIndex = 0;
 
-            RequestOwnership();
+            //RequestOwnership();
+            for (int i = 0; i < activeCards; i++)
+                cardsParent.GetChild(i).GetComponent<MemoryChangeOwner>().RequestOwnership();
 
             PlayerMoves = 2;
 
@@ -224,7 +229,10 @@ public class MemoryManager : MonoBehaviour, IPunObservable
     {
         currentPlayerIndex = Random.Range(0.0f, 100.0f) > 50.0f ? 0 : 1;
 
-        RequestOwnership();
+        //RequestOwnership();
+
+        for (int i = 0; i < activeCards; i++)
+            cardsParent.GetChild(i).GetComponent<MemoryChangeOwner>().RequestOwnership();
     }
 
     public void PlaceCards()

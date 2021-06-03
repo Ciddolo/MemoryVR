@@ -34,8 +34,6 @@ namespace BNG
         [Tooltip("Optional GUI Text element to output debug information.")]
         public Text DebugText;
 
-        public MemoryManager GameManager;
-
         ScreenFader sf;
 
         void Awake()

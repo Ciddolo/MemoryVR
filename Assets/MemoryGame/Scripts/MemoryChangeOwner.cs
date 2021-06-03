@@ -38,4 +38,9 @@ public class MemoryChangeOwner : MonoBehaviourPun, IPunOwnershipCallbacks
         Debug.Log("REQUEST OWNERSHIP");
         base.photonView.RequestOwnership();
     }
+
+    //private void OnMouseDown()
+    //{
+    //    RequestOwnership();
+    //}
 }
