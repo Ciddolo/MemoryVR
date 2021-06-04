@@ -29,11 +29,7 @@ public class MemoryPlayer : MonoBehaviour
             MemoryCard pointedCard = hitInfo.collider.GetComponent<MemoryCard>();
 
             if (pointedCard)
-            {
-                if (!pointedCard.View.IsMine) return;
-
-                CardInteraction(pointedCard);
-            }
+                CardInteraction(pointedCard);            
             else
                 StopCardInteraction();
         }

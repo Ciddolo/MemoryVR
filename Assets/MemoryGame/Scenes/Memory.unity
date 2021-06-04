@@ -4476,10 +4476,25 @@ PrefabInstance:
       propertyPath: sceneViewId
       value: 9
       objectReference: {fileID: 0}
+    - target: {fileID: 1147718222497694721, guid: 65781a65768683949b3bb7b1419322a8,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 1533470377002944054, guid: 65781a65768683949b3bb7b1419322a8,
         type: 3}
       propertyPath: sceneViewId
       value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 2266437684284809631, guid: 65781a65768683949b3bb7b1419322a8,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2365835327296166465, guid: 65781a65768683949b3bb7b1419322a8,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2766958600773768259, guid: 65781a65768683949b3bb7b1419322a8,
         type: 3}
@@ -4491,10 +4506,40 @@ PrefabInstance:
       propertyPath: sceneViewId
       value: 7
       objectReference: {fileID: 0}
+    - target: {fileID: 4380963009841501812, guid: 65781a65768683949b3bb7b1419322a8,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5058375081067038910, guid: 65781a65768683949b3bb7b1419322a8,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5096778481294308962, guid: 65781a65768683949b3bb7b1419322a8,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5126683093249646224, guid: 65781a65768683949b3bb7b1419322a8,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5343265015690659425, guid: 65781a65768683949b3bb7b1419322a8,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 5636864872842611804, guid: 65781a65768683949b3bb7b1419322a8,
         type: 3}
       propertyPath: sceneViewId
       value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 5674605645711546307, guid: 65781a65768683949b3bb7b1419322a8,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5922818814070249713, guid: 65781a65768683949b3bb7b1419322a8,
         type: 3}
@@ -4505,6 +4550,11 @@ PrefabInstance:
         type: 3}
       propertyPath: sceneViewId
       value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 6835171619322604846, guid: 65781a65768683949b3bb7b1419322a8,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7072523913801817893, guid: 65781a65768683949b3bb7b1419322a8,
         type: 3}
@@ -4520,6 +4570,11 @@ PrefabInstance:
         type: 3}
       propertyPath: sceneViewId
       value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 7471928315520719902, guid: 65781a65768683949b3bb7b1419322a8,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7975336831812603602, guid: 65781a65768683949b3bb7b1419322a8,
         type: 3}
@@ -4785,6 +4840,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8196931686650890383, guid: 65781a65768683949b3bb7b1419322a8,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8597615591755152748, guid: 65781a65768683949b3bb7b1419322a8,
         type: 3}

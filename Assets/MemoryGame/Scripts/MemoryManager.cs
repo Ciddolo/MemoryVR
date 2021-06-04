@@ -79,8 +79,6 @@ public class MemoryManager : MonoBehaviourPun, IPunObservable
         guestScore = 0;
         syncGuestScore = 0;
 
-        PrintScores();
-
         showTimer = 3.0f;
 
         currentPlayerIndex = -1;
@@ -111,6 +109,7 @@ public class MemoryManager : MonoBehaviourPun, IPunObservable
 
         SyncFromOwner();
 
+        PrintScores();
         PrintInfo();
 
         //if (InputBridge.Instance.RightGripDown || Input.GetKeyDown(KeyCode.O))
@@ -216,8 +215,8 @@ public class MemoryManager : MonoBehaviourPun, IPunObservable
         difficulty = syncDifficulty;
         SetDifficulty(difficulty);
 
-        hostScore = syncHostScore;
-        guestScore = syncGuestScore;
+        hostScore = syncHostScore > hostScore ? syncHostScore : hostScore;
+        guestScore = syncGuestScore > guestScore ? syncGuestScore : guestScore;
 
         if (PhotonNetwork.IsMasterClient) return;
 
@@ -269,7 +268,6 @@ public class MemoryManager : MonoBehaviourPun, IPunObservable
 
         hostScore = 0;
         guestScore = 0;
-        PrintScores();
 
         for (int i = 0; i < cardsParent.childCount; i++)
         {
@@ -343,8 +341,8 @@ public class MemoryManager : MonoBehaviourPun, IPunObservable
 
         if (showedCards[0].Code == showedCards[1].Code)
         {
-            showedCards[0].WasFound = true;
-            showedCards[1].WasFound = true;
+            showedCards[0].SetFound();
+            showedCards[1].SetFound();
 
             showedCards.Clear();
 
@@ -354,8 +352,6 @@ public class MemoryManager : MonoBehaviourPun, IPunObservable
                 hostScore++;
             else
                 guestScore++;
-
-            PrintScores();
         }
         else
             showTime = true;
