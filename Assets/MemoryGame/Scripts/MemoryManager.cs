@@ -41,9 +41,9 @@ public class MemoryManager : MonoBehaviourPun, IPunObservable
     private int guestScore;
     private int syncGuestScore;
 
-    private int test = 0;
+    private int changingOwner;
+    private int syncChangingOwner;
 
-    [Header("Photon")]
     private PhotonView view;
     public PhotonView View { get { return view; } }
 
@@ -74,12 +74,14 @@ public class MemoryManager : MonoBehaviourPun, IPunObservable
         view = GetComponent<PhotonView>();
         ownerChanger = GetComponent<MemoryChangeOwner>();
 
+        changingOwner = -1;
+
         hostScore = 0;
         syncHostScore = 0;
         guestScore = 0;
         syncGuestScore = 0;
 
-        showTimer = 3.0f;
+        showTimer = SHOWTIME;
 
         currentPlayerIndex = -1;
 
@@ -111,12 +113,6 @@ public class MemoryManager : MonoBehaviourPun, IPunObservable
 
         PrintScores();
         PrintInfo();
-
-        //if (InputBridge.Instance.RightGripDown || Input.GetKeyDown(KeyCode.O))
-        //{
-        //    currentPlayerIndex = PhotonNetwork.IsMasterClient ? 0 : 1;
-        //    RequestOwnership();
-        //}
     }
 
     private void RegisterPlayers()
@@ -159,9 +155,24 @@ public class MemoryManager : MonoBehaviourPun, IPunObservable
 
     private void CheckOwnership()
     {
-        if (!IsMyTurn || view.IsMine) return;
+        if (!IsMyTurn || view.IsMine || changingOwner == 0) return;
 
         RequestOwnership();
+
+        bool allOwnerChanged = OwnerChanger.ChangeOwner;
+
+        for (int i = 0; i < activeCards; i++)
+            allOwnerChanged = allOwnerChanged && cardsParent.GetChild(i).GetComponent<MemoryChangeOwner>().ChangeOwner;
+
+        changingOwner = allOwnerChanged ? 0 : 1;
+    }
+    
+    private void RequestOwnership()
+    {
+        ownerChanger.RequestOwnership();
+
+        for (int i = 0; i < activeCards; i++)
+            cardsParent.GetChild(i).GetComponent<MemoryChangeOwner>().RequestOwnership();
     }
 
     private void Showtime()
@@ -179,10 +190,12 @@ public class MemoryManager : MonoBehaviourPun, IPunObservable
 
             PlayerMoves = 2;
 
-            showTimer = 3.0f;
+            showTimer = SHOWTIME;
             showTime = false;
 
             currentPlayerIndex = PhotonNetwork.IsMasterClient ? 1 : 0;
+
+            changingOwner = 1;
         }
     }
 
@@ -196,17 +209,11 @@ public class MemoryManager : MonoBehaviourPun, IPunObservable
             cardsParent.GetChild(i).GetComponent<MemoryChangeOwner>().TransferOwnership(currentPlayerId);
     }
 
-    private void RequestOwnership()
-    {
-        ownerChanger.RequestOwnership();
-
-        for (int i = 0; i < activeCards; i++)
-            cardsParent.GetChild(i).GetComponent<MemoryChangeOwner>().RequestOwnership();
-    }
-
     private void SyncFromOwner()
     {
         if (view.IsMine) return;
+
+        changingOwner = syncChangingOwner;
 
         PlayerMoves = syncPlayerMoves;
 
@@ -215,8 +222,8 @@ public class MemoryManager : MonoBehaviourPun, IPunObservable
         difficulty = syncDifficulty;
         SetDifficulty(difficulty);
 
-        hostScore = syncHostScore > hostScore ? syncHostScore : hostScore;
-        guestScore = syncGuestScore > guestScore ? syncGuestScore : guestScore;
+        hostScore = syncHostScore >= hostScore ? syncHostScore : hostScore;
+        guestScore = syncGuestScore >= guestScore ? syncGuestScore : guestScore;
 
         if (PhotonNetwork.IsMasterClient) return;
 
@@ -267,7 +274,9 @@ public class MemoryManager : MonoBehaviourPun, IPunObservable
         ownerChanger.RequestOwnership();
 
         hostScore = 0;
+        syncHostScore = 0;
         guestScore = 0;
+        syncGuestScore = 0;
 
         for (int i = 0; i < cardsParent.childCount; i++)
         {
@@ -317,6 +326,8 @@ public class MemoryManager : MonoBehaviourPun, IPunObservable
         }
 
         currentPlayerIndex = Random.Range(0.0f, 100.0f) >= 50.0f ? 0 : 1;
+
+        changingOwner = 1;
     }
 
     public void SetDifficulty(MemoryDifficulty newDifficulty)
@@ -361,7 +372,7 @@ public class MemoryManager : MonoBehaviourPun, IPunObservable
     {
         if (stream.IsWriting && view.IsMine)
         {
-            test = 1;
+            stream.SendNext(changingOwner);
             stream.SendNext(PlayerMoves);
             stream.SendNext(currentPlayerIndex);
             stream.SendNext(difficulty);
@@ -375,7 +386,7 @@ public class MemoryManager : MonoBehaviourPun, IPunObservable
         }
         else
         {
-            test = 2;
+            syncChangingOwner = (int)stream.ReceiveNext();
             syncPlayerMoves = (int)stream.ReceiveNext();
             syncCurrentPlayerIndex = (int)stream.ReceiveNext();
             syncDifficulty = (int)stream.ReceiveNext();

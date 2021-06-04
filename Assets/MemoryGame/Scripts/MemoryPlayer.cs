@@ -10,7 +10,7 @@ public class MemoryPlayer : MonoBehaviour
     public MemoryManager GameManager;
     public Transform RightHand;
 
-    private readonly float MaxDistance = 50.0f;
+    private const float MAX_DISTANCE = 50.0f;
 
     private MemoryCard currentCard;
 
@@ -23,7 +23,7 @@ public class MemoryPlayer : MonoBehaviour
     {
         if (!GameManager.IsMyTurn) return;
 
-        Physics.Raycast(RightHand.position, RightHand.forward, out RaycastHit hitInfo, MaxDistance);
+        Physics.Raycast(RightHand.position, RightHand.forward, out RaycastHit hitInfo, MAX_DISTANCE);
         if (hitInfo.collider)
         {
             MemoryCard pointedCard = hitInfo.collider.GetComponent<MemoryCard>();

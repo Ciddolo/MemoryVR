@@ -6,6 +6,9 @@ using Photon.Realtime;
 
 public class MemoryChangeOwner : MonoBehaviourPun, IPunOwnershipCallbacks
 {
+    public bool ChangeOwner { get { return changeOwner; } }
+    private bool changeOwner;
+
     private void Awake()
     {
         PhotonNetwork.AddCallbackTarget(this);
@@ -18,28 +21,28 @@ public class MemoryChangeOwner : MonoBehaviourPun, IPunOwnershipCallbacks
 
     public void OnOwnershipRequest(PhotonView targetView, Player requestingPlayer)
     {
-        if (targetView != base.photonView) return;
-
-        base.photonView.TransferOwnership(requestingPlayer);
     }
 
     public void OnOwnershipTransfered(PhotonView targetView, Player previousOwner)
     {
-        if (targetView != base.photonView) return;
+        changeOwner = false;
     }
 
     public void OnOwnershipTransferFailed(PhotonView targetView, Player senderOfFailedRequest)
     {
-        Debug.Log("TRANSFER FAILED");
     }
 
     public void RequestOwnership()
     {
+        changeOwner = true;
+
         base.photonView.RequestOwnership();
     }
 
     public void TransferOwnership(int newOwnerId)
     {
+        changeOwner = true;
+        
         base.photonView.TransferOwnership(newOwnerId);
     }
 }
