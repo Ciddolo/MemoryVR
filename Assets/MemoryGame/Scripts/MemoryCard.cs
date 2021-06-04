@@ -10,7 +10,7 @@ public enum ColorMaterial
     Selected
 }
 
-public class MemoryCard : MonoBehaviour, IPunObservable
+public class MemoryCard : MonoBehaviourPun, IPunObservable
 {
     public MeshRenderer CurrentMeshRenderer;
 
@@ -23,7 +23,8 @@ public class MemoryCard : MonoBehaviour, IPunObservable
 
     public MemoryManager GameManager;
 
-    public PhotonView View;
+    private PhotonView view;
+    public PhotonView View { get { return view; } }
 
     private Vector3 syncLocalPosition;
 
@@ -32,7 +33,7 @@ public class MemoryCard : MonoBehaviour, IPunObservable
 
     private void Start()
     {
-        View = GetComponent<PhotonView>();
+        view = GetComponent<PhotonView>();
     }
 
     private void Update()
@@ -93,24 +94,20 @@ public class MemoryCard : MonoBehaviour, IPunObservable
 
     public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
     {
-        if (stream.IsWriting)
+        if (stream.IsWriting && view.IsMine)
         {
+            stream.SendNext(indexMaterial);
+
             if (PhotonNetwork.IsMasterClient)
                 stream.SendNext(transform.localPosition);
-
-            if (GameManager.IsMyTurn())
-                stream.SendNext(indexMaterial);
         }
         else
         {
+            oldIndexMaterial = indexMaterial;
+            indexMaterial = (int)stream.ReceiveNext();
+
             if (!PhotonNetwork.IsMasterClient)
                 syncLocalPosition = (Vector3)stream.ReceiveNext();
-
-            if (!GameManager.IsMyTurn())
-            {
-                oldIndexMaterial = indexMaterial;
-                indexMaterial = (int)stream.ReceiveNext();
-            }
         }
     }
 }

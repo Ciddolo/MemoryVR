@@ -239,12 +239,6 @@ namespace BNG {
             }
         }
 
-        public void RequestCardsOwnership(Transform cardsParent, int activeCards)
-        {
-            for (int i = 0; i < activeCards; i++)
-                cardsParent.GetChild(i).GetComponent<MemoryChangeOwner>().RequestOwnership();
-        }
-
         public virtual bool RecentlyRequested(PhotonView view) {
             // Previously requested if in list and requested less than 3 seconds ago
             return requestedGrabbables != null && requestedGrabbables.ContainsKey(view.ViewID) && PhotonNetwork.Time - requestedGrabbables[view.ViewID] < 3f;

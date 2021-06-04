@@ -3431,7 +3431,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   GameManager: {fileID: 2092159420}
   RightHand: {fileID: 720527534}
-  MaxDistance: 50
 --- !u!1 &1605702840
 GameObject:
   m_ObjectHideFlags: 0
@@ -4454,20 +4453,7 @@ MonoBehaviour:
   InfoUI: {fileID: 1505453891}
   HostScoreUI: {fileID: 1167811045}
   GuestScoreUI: {fileID: 1824298072}
-  View: {fileID: 2092159421}
   PlayerMoves: 0
---- !u!114 &2092159421 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 8138959727492129406, guid: 65781a65768683949b3bb7b1419322a8,
-    type: 3}
-  m_PrefabInstance: {fileID: 2111838757}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2092159419}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: aa584fbee541324448dd18d8409c7a41, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1001 &2111838757
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -4737,6 +4723,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8138959727492129406, guid: 65781a65768683949b3bb7b1419322a8,
         type: 3}
+      propertyPath: OwnershipTransfer
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8138959727492129406, guid: 65781a65768683949b3bb7b1419322a8,
+        type: 3}
       propertyPath: ObservedComponents.Array.data[0]
       value: 
       objectReference: {fileID: 2092159420}
@@ -4936,7 +4927,6 @@ MonoBehaviour:
   GameVersion: 1
   RemotePlayerObjectName: RemotePlayer
   DebugText: {fileID: 118245918}
-  GameManager: {fileID: 0}
 --- !u!1 &3402538390741551655
 GameObject:
   m_ObjectHideFlags: 0

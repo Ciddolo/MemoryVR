@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 8138959727492129407}
   - component: {fileID: 8138959727492129406}
   - component: {fileID: 8138959727492129404}
+  - component: {fileID: 7458180540789015909}
   m_Layer: 0
   m_Name: MemoryManager
   m_TagString: Untagged
@@ -74,6 +75,18 @@ MonoBehaviour:
   GuestScoreUI: {fileID: 0}
   View: {fileID: 8138959727492129406}
   PlayerMoves: 0
+--- !u!114 &7458180540789015909
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8138959727492129405}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 20cb7fac83cb5b54d90696b11db138d8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &8138959727781668298
 GameObject:
   m_ObjectHideFlags: 0

@@ -13,8 +13,10 @@ public enum MemoryDifficulty
     Hard = 12
 }
 
-public class MemoryManager : MonoBehaviour, IPunObservable
+public class MemoryManager : MonoBehaviourPun, IPunObservable
 {
+    public bool IsMyTurn { get { return (PhotonNetwork.IsMasterClient && currentPlayerIndex == 0) || (!PhotonNetwork.IsMasterClient && currentPlayerIndex == 1); } }
+
     private readonly float columnsOffset = 0.3f;
     private readonly float rowsOffset = 0.3f;
     private readonly float cardWidth = 0.4f;
@@ -37,8 +39,14 @@ public class MemoryManager : MonoBehaviour, IPunObservable
     public Text GuestScoreUI;
     private int guestScore;
 
+    private int test = 0;
+
     [Header("Photon")]
-    public PhotonView View;
+    private PhotonView view;
+    public PhotonView View { get { return view; } }
+
+    private MemoryChangeOwner ownerChanger;
+    public MemoryChangeOwner OwnerChanger { get { return ownerChanger; } }
 
     private int currentPlayerIndex;
     private int syncCurrentPlayerIndex;
@@ -61,7 +69,8 @@ public class MemoryManager : MonoBehaviour, IPunObservable
     void Awake()
     {
         cardsParent = transform.GetChild(0);
-        View = GetComponent<PhotonView>();
+        view = GetComponent<PhotonView>();
+        ownerChanger = GetComponent<MemoryChangeOwner>();
 
         hostScore = 0;
         guestScore = 0;
@@ -91,14 +100,19 @@ public class MemoryManager : MonoBehaviour, IPunObservable
     {
         RegisterPlayers();
 
+        CheckOwnership();
+
         Showtime();
 
-        SyncFromHost();
+        SyncFromOwner();
 
         PrintInfo();
 
-        if (Input.GetKeyDown(KeyCode.Space))
-            Debug.Log("SPACE");
+        if (InputBridge.Instance.RightGripDown || Input.GetKeyDown(KeyCode.O))
+        {
+            currentPlayerIndex = PhotonNetwork.IsMasterClient ? 0 : 1;
+            RequestOwnership();
+        }
     }
 
     private void RegisterPlayers()
@@ -139,6 +153,13 @@ public class MemoryManager : MonoBehaviour, IPunObservable
         arePlayersRegistered = RegisteredPlayers.Count >= 2;
     }
 
+    private void CheckOwnership()
+    {
+        if (!IsMyTurn || view.IsMine) return;
+
+        RequestOwnership();
+    }
+
     private void Showtime()
     {
         if (!showTime) return;
@@ -150,33 +171,40 @@ public class MemoryManager : MonoBehaviour, IPunObservable
             showedCards[0].HideCard();
             showedCards[1].HideCard();
 
-            if (currentPlayerIndex == 0)
-                currentPlayerIndex = 1;
-            else
-                currentPlayerIndex = 0;
-
-            //RequestOwnership();
-            for (int i = 0; i < activeCards; i++)
-                cardsParent.GetChild(i).GetComponent<MemoryChangeOwner>().RequestOwnership();
+            showedCards.Clear();
 
             PlayerMoves = 2;
 
             showTimer = 3.0f;
             showTime = false;
+
+            currentPlayerIndex = currentPlayerIndex == 0 ? 1 : 0;
         }
     }
 
-    public void RequestOwnership()
+    private void TransferOwnership()
     {
-        RegisteredPlayers[currentPlayerIndex].GetComponent<BNG.NetworkPlayer>().RequestCardsOwnership(cardsParent, activeCards);
+        int currentPlayerId = int.Parse(PhotonNetwork.PlayerListOthers[0].UserId);
+
+        ownerChanger.TransferOwnership(currentPlayerId);
+
+        for (int i = 0; i < activeCards; i++)
+            cardsParent.GetChild(i).GetComponent<MemoryChangeOwner>().TransferOwnership(currentPlayerId);
     }
 
-    private void SyncFromHost()
+    private void RequestOwnership()
     {
-        if (!IsMyTurn())
-            PlayerMoves = syncPlayerMoves;
+        ownerChanger.RequestOwnership();
 
-        if (PhotonNetwork.IsMasterClient) return;
+        for (int i = 0; i < activeCards; i++)
+            cardsParent.GetChild(i).GetComponent<MemoryChangeOwner>().RequestOwnership();
+    }
+
+    private void SyncFromOwner()
+    {
+        if (view.IsMine) return;
+
+        PlayerMoves = syncPlayerMoves;
 
         currentPlayerIndex = syncCurrentPlayerIndex;
 
@@ -185,6 +213,8 @@ public class MemoryManager : MonoBehaviour, IPunObservable
 
         cardsParentPosition = syncCardsParentPosition;
         cardsParent.position = cardsParentPosition;
+
+        if (PhotonNetwork.IsMasterClient) return;
 
         activeCards = syncActiveCards;
         for (int i = 0; i < cardsParent.childCount; i++)
@@ -206,15 +236,25 @@ public class MemoryManager : MonoBehaviour, IPunObservable
 
         if (currentPlayerIndex >= 0)
         {
-            if (currentPlayerIndex == 0)
-                info += "\n<color=white>CURRENT PLAYER:</color> <color=red>HOST</color>";
+            if (IsMyTurn)
+                info += "\n<color=white>MY TURN</color>";
             else
-                info += "\n<color=white>CURRENT PLAYER:</color> <color=cyan>GUEST</color>";
+                info += "\n<color=grey>OPPONENT TURN</color>";
         }
-        else
-            info += "\n<color=white>CURRENT PLAYER:</color> <color=grey>NONE</color>";
 
         info += "\n<color=white>REMAINING MOVES:</color> <color=green>" + PlayerMoves + "</color>";
+
+        if (test == 0)
+            info += "\nNONE";
+        else if (test == 1)
+            info += "\nWRITE";
+        else if (test == 2)
+            info += "\nREAD";
+
+        info += "\nMANAGER OWNER: " + view.Owner;
+
+        if (cardsParent.GetChild(0).gameObject.activeSelf)
+            info += "\nCURRENT INDEX: " + currentPlayerIndex + " CARDS OWNER: " + cardsParent.GetChild(0).GetComponent<MemoryCard>().View.Owner;
 
         InfoUI.text = info;
     }
@@ -225,19 +265,11 @@ public class MemoryManager : MonoBehaviour, IPunObservable
         GuestScoreUI.text = "<color=cyan>GUEST</color><color=white>\n" + guestScore + "</color>";
     }
 
-    private void FirstPlayer()
-    {
-        currentPlayerIndex = Random.Range(0.0f, 100.0f) > 50.0f ? 0 : 1;
-
-        //RequestOwnership();
-
-        for (int i = 0; i < activeCards; i++)
-            cardsParent.GetChild(i).GetComponent<MemoryChangeOwner>().RequestOwnership();
-    }
-
     public void PlaceCards()
     {
         if (!PhotonNetwork.IsMasterClient) return;
+
+        ownerChanger.RequestOwnership();
 
         hostScore = 0;
         guestScore = 0;
@@ -290,7 +322,7 @@ public class MemoryManager : MonoBehaviour, IPunObservable
             cardsParent.GetChild(randomIndex).localPosition = temp;
         }
 
-        FirstPlayer();
+        currentPlayerIndex = Random.Range(0.0f, 100.0f) > 50.0f ? 0 : 1;
     }
 
     public void SetDifficulty(MemoryDifficulty newDifficulty)
@@ -318,6 +350,8 @@ public class MemoryManager : MonoBehaviour, IPunObservable
             showedCards[0].WasFound = true;
             showedCards[1].WasFound = true;
 
+            showedCards.Clear();
+
             PlayerMoves = 2;
             if (currentPlayerIndex == 0)
                 hostScore++;
@@ -330,40 +364,31 @@ public class MemoryManager : MonoBehaviour, IPunObservable
             showTime = true;
     }
 
-    public bool IsMyTurn()
-    {
-        return (PhotonNetwork.IsMasterClient && currentPlayerIndex == 0) || (!PhotonNetwork.IsMasterClient && currentPlayerIndex == 1);
-    }
-
     public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
     {
-        if (stream.IsWriting)
+        if (stream.IsWriting && view.IsMine)
         {
-            if (PhotonNetwork.IsMasterClient)
-            {
-                stream.SendNext(PlayerMoves);
-                stream.SendNext(currentPlayerIndex);
-                stream.SendNext(difficulty);
-                stream.SendNext(cardsParentPosition);
-                stream.SendNext(activeCards);
+            test = 1;
+            stream.SendNext(PlayerMoves);
+            stream.SendNext(currentPlayerIndex);
+            stream.SendNext(difficulty);
+            stream.SendNext(cardsParentPosition);
+            stream.SendNext(activeCards);
 
-                for (int i = 0; i < cardPositions.Length; i++)
-                    stream.SendNext(cardPositions[i]);
-            }
+            for (int i = 0; i < cardPositions.Length; i++)
+                stream.SendNext(cardPositions[i]);
         }
         else
         {
-            if (!PhotonNetwork.IsMasterClient)
-            {
-                syncPlayerMoves = (int)stream.ReceiveNext();
-                syncCurrentPlayerIndex = (int)stream.ReceiveNext();
-                syncDifficulty = (int)stream.ReceiveNext();
-                syncCardsParentPosition = (Vector3)stream.ReceiveNext();
-                syncActiveCards = (int)stream.ReceiveNext();
+            test = 2;
+            syncPlayerMoves = (int)stream.ReceiveNext();
+            syncCurrentPlayerIndex = (int)stream.ReceiveNext();
+            syncDifficulty = (int)stream.ReceiveNext();
+            syncCardsParentPosition = (Vector3)stream.ReceiveNext();
+            syncActiveCards = (int)stream.ReceiveNext();
 
-                for (int i = 0; i < cardPositions.Length; i++)
-                    syncCardPositions[i] = (Vector3)stream.ReceiveNext();
-            }
+            for (int i = 0; i < cardPositions.Length; i++)
+                syncCardPositions[i] = (Vector3)stream.ReceiveNext();
         }
     }
 }

@@ -30,17 +30,16 @@ public class MemoryChangeOwner : MonoBehaviourPun, IPunOwnershipCallbacks
 
     public void OnOwnershipTransferFailed(PhotonView targetView, Player senderOfFailedRequest)
     {
-        throw new System.NotImplementedException();
+        Debug.Log("TRANSFER FAILED");
     }
 
     public void RequestOwnership()
     {
-        Debug.Log("REQUEST OWNERSHIP");
         base.photonView.RequestOwnership();
     }
 
-    //private void OnMouseDown()
-    //{
-    //    RequestOwnership();
-    //}
+    public void TransferOwnership(int newOwnerId)
+    {
+        base.photonView.TransferOwnership(newOwnerId);
+    }
 }
