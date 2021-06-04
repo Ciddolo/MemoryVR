@@ -30,11 +30,7 @@ public class MemoryPlayer : MonoBehaviour
 
             if (pointedCard)
             {
-                if (!pointedCard.View.IsMine)
-                {
-                    Debug.Log("NOT MINE");
-                    return;
-                }
+                if (!pointedCard.View.IsMine) return;
 
                 CardInteraction(pointedCard);
             }

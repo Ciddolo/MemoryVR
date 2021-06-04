@@ -36,8 +36,10 @@ public class MemoryManager : MonoBehaviourPun, IPunObservable
 
     public Text HostScoreUI;
     private int hostScore;
+    private int syncHostScore;
     public Text GuestScoreUI;
     private int guestScore;
+    private int syncGuestScore;
 
     private int test = 0;
 
@@ -73,7 +75,10 @@ public class MemoryManager : MonoBehaviourPun, IPunObservable
         ownerChanger = GetComponent<MemoryChangeOwner>();
 
         hostScore = 0;
+        syncHostScore = 0;
         guestScore = 0;
+        syncGuestScore = 0;
+
         PrintScores();
 
         showTimer = 3.0f;
@@ -108,11 +113,11 @@ public class MemoryManager : MonoBehaviourPun, IPunObservable
 
         PrintInfo();
 
-        if (InputBridge.Instance.RightGripDown || Input.GetKeyDown(KeyCode.O))
-        {
-            currentPlayerIndex = PhotonNetwork.IsMasterClient ? 0 : 1;
-            RequestOwnership();
-        }
+        //if (InputBridge.Instance.RightGripDown || Input.GetKeyDown(KeyCode.O))
+        //{
+        //    currentPlayerIndex = PhotonNetwork.IsMasterClient ? 0 : 1;
+        //    RequestOwnership();
+        //}
     }
 
     private void RegisterPlayers()
@@ -178,7 +183,7 @@ public class MemoryManager : MonoBehaviourPun, IPunObservable
             showTimer = 3.0f;
             showTime = false;
 
-            currentPlayerIndex = currentPlayerIndex == 0 ? 1 : 0;
+            currentPlayerIndex = PhotonNetwork.IsMasterClient ? 1 : 0;
         }
     }
 
@@ -211,10 +216,13 @@ public class MemoryManager : MonoBehaviourPun, IPunObservable
         difficulty = syncDifficulty;
         SetDifficulty(difficulty);
 
-        cardsParentPosition = syncCardsParentPosition;
-        cardsParent.position = cardsParentPosition;
+        hostScore = syncHostScore;
+        guestScore = syncGuestScore;
 
         if (PhotonNetwork.IsMasterClient) return;
+
+        cardsParentPosition = syncCardsParentPosition;
+        cardsParent.position = cardsParentPosition;
 
         activeCards = syncActiveCards;
         for (int i = 0; i < cardsParent.childCount; i++)
@@ -243,18 +251,6 @@ public class MemoryManager : MonoBehaviourPun, IPunObservable
         }
 
         info += "\n<color=white>REMAINING MOVES:</color> <color=green>" + PlayerMoves + "</color>";
-
-        if (test == 0)
-            info += "\nNONE";
-        else if (test == 1)
-            info += "\nWRITE";
-        else if (test == 2)
-            info += "\nREAD";
-
-        info += "\nMANAGER OWNER: " + view.Owner;
-
-        if (cardsParent.GetChild(0).gameObject.activeSelf)
-            info += "\nCURRENT INDEX: " + currentPlayerIndex + " CARDS OWNER: " + cardsParent.GetChild(0).GetComponent<MemoryCard>().View.Owner;
 
         InfoUI.text = info;
     }
@@ -322,7 +318,7 @@ public class MemoryManager : MonoBehaviourPun, IPunObservable
             cardsParent.GetChild(randomIndex).localPosition = temp;
         }
 
-        currentPlayerIndex = Random.Range(0.0f, 100.0f) > 50.0f ? 0 : 1;
+        currentPlayerIndex = Random.Range(0.0f, 100.0f) >= 50.0f ? 0 : 1;
     }
 
     public void SetDifficulty(MemoryDifficulty newDifficulty)
@@ -353,6 +349,7 @@ public class MemoryManager : MonoBehaviourPun, IPunObservable
             showedCards.Clear();
 
             PlayerMoves = 2;
+
             if (currentPlayerIndex == 0)
                 hostScore++;
             else
@@ -374,6 +371,8 @@ public class MemoryManager : MonoBehaviourPun, IPunObservable
             stream.SendNext(difficulty);
             stream.SendNext(cardsParentPosition);
             stream.SendNext(activeCards);
+            stream.SendNext(hostScore);
+            stream.SendNext(guestScore);
 
             for (int i = 0; i < cardPositions.Length; i++)
                 stream.SendNext(cardPositions[i]);
@@ -386,6 +385,8 @@ public class MemoryManager : MonoBehaviourPun, IPunObservable
             syncDifficulty = (int)stream.ReceiveNext();
             syncCardsParentPosition = (Vector3)stream.ReceiveNext();
             syncActiveCards = (int)stream.ReceiveNext();
+            syncHostScore = (int)stream.ReceiveNext();
+            syncGuestScore = (int)stream.ReceiveNext();
 
             for (int i = 0; i < cardPositions.Length; i++)
                 syncCardPositions[i] = (Vector3)stream.ReceiveNext();
