@@ -53,6 +53,13 @@ public class MemoryCard : MonoBehaviourPun, IPunObservable
             CurrentMeshRenderer.material = Materials[indexMaterial];
         }
 
+        if (isShowing == 1 || wasFound == 1)
+        {
+            indexMaterial = (int)ColorMaterial.Visible;
+            oldIndexMaterial = indexMaterial;
+            CurrentMeshRenderer.material = Materials[indexMaterial];
+        }
+
         if (!PhotonNetwork.IsMasterClient)
             transform.localPosition = syncLocalPosition;
     }

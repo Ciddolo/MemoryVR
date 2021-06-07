@@ -250,10 +250,20 @@ public class MemoryManager : MonoBehaviourPun, IPunObservable
 
         if (currentPlayerIndex >= 0)
         {
-            if (IsMyTurn)
-                info += "\n<color=white>MY TURN</color>";
+            if (PhotonNetwork.IsMasterClient)
+            {
+                if (IsMyTurn)
+                    info += "\n<color=red>MY TURN</color>";
+                else
+                    info += "\n<color=cyan>OPPONENT TURN</color>";
+            }
             else
-                info += "\n<color=grey>OPPONENT TURN</color>";
+            {
+                if (IsMyTurn)
+                    info += "\n<color=cyan>MY TURN</color>";
+                else
+                    info += "\n<color=red>OPPONENT TURN</color>";
+            }
         }
 
         info += "\n<color=white>REMAINING MOVES:</color> <color=green>" + PlayerMoves + "</color>";
