@@ -369,7 +369,7 @@ namespace BNG {
                 }
             }
 
-            NetworkedGrabbableCubeMemory netGrabbableCM = targetView.gameObject.GetComponent<NetworkedGrabbableCubeMemory>();
+            MemoryNetworkedGrabbable netGrabbableCM = targetView.gameObject.GetComponent<MemoryNetworkedGrabbable>();
             if (netGrabbableCM != null)
             {
                 // Authorize transfer of ownership if we're not holding it

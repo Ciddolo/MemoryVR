@@ -4936,7 +4936,6 @@ MonoBehaviour:
   GameVersion: 1
   RemotePlayerObjectName: RemotePlayer
   DebugText: {fileID: 118245918}
-  GameManager: {fileID: 0}
 --- !u!1 &3402538390741551655
 GameObject:
   m_ObjectHideFlags: 0
